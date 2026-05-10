@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -83,6 +84,45 @@ public class RedisQueueRepository {
     public long getActiveTtlSeconds(String eventId, String userId) {
         Long seconds = redisTemplate.getExpire(keys.active(eventId, userId), TimeUnit.SECONDS);
         return seconds == null ? -2 : seconds;
+    }
+
+    public Set<String> findQueueEvents() {
+        Set<String> events = redisTemplate.opsForSet().members(keys.queueEvents());
+        return events == null ? Set.of() : events;
+    }
+
+    public long countWaiting(String eventId) {
+        Long count = redisTemplate.opsForZSet().size(keys.waiting(eventId));
+        return count == null ? 0L : count;
+    }
+
+    public long removeExpiredActiveUsers(String eventId, long nowEpochMillis) {
+        Long removed = redisTemplate.opsForZSet().removeRangeByScore(keys.activeUsers(eventId), 0, nowEpochMillis);
+        return removed == null ? 0L : removed;
+    }
+
+    public long countTrackedActiveUsers(String eventId) {
+        Long count = redisTemplate.opsForZSet().size(keys.activeUsers(eventId));
+        return count == null ? 0L : count;
+    }
+
+    public void incrementRegistered() {
+        redisTemplate.opsForValue().increment(keys.metricsRegistered());
+    }
+
+    public void incrementAdmitted(long count) {
+        if (count > 0) {
+            redisTemplate.opsForValue().increment(keys.metricsAdmitted(), count);
+        }
+    }
+
+    public void incrementExpiredLookup() {
+        redisTemplate.opsForValue().increment(keys.metricsExpiredLookup());
+    }
+
+    public long metricValue(String key) {
+        String value = redisTemplate.opsForValue().get(key);
+        return value == null ? 0L : Long.parseLong(value);
     }
 
     private static String value(Map<Object, Object> values, String key) {

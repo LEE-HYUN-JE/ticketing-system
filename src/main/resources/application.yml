@@ -18,4 +18,4 @@ queue:
   poll-after-seconds: 5
   active-ttl-seconds: 60
   token-ttl-seconds: 3600
-
+  scheduler-enabled: true

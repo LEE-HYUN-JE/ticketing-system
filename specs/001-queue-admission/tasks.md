@@ -104,19 +104,19 @@
 
 ### Tests for User Story 3
 
-- [ ] T032 [P] [US3] `src/test/java/com/example/ticketing/queue/application/AdmissionSchedulerServiceTest.java`에 rate limit, oldest-first admission, less-than-rate queue, empty queue scheduler service test를 추가한다
-- [ ] T033 [P] [US3] `src/test/java/com/example/ticketing/queue/infrastructure/RedisAdmissionRepositoryTest.java`에 atomic pop-to-active 동작과 active admission TTL 만료 Redis 통합 테스트를 추가한다
-- [ ] T034 [P] [US3] `src/test/java/com/example/ticketing/queue/integration/AdmissionFlowIntegrationTest.java`에 사용자 진입, admission 실행, polling을 통한 ENTERED 상태 관찰 end-to-end 통합 테스트를 추가한다
+- [X] T032 [P] [US3] `src/test/java/com/example/ticketing/queue/application/AdmissionSchedulerServiceTest.java`에 rate limit, oldest-first admission, less-than-rate queue, empty queue scheduler service test를 추가한다
+- [X] T033 [P] [US3] `src/test/java/com/example/ticketing/queue/infrastructure/RedisAdmissionRepositoryTest.java`에 atomic pop-to-active 동작과 active admission TTL 만료 Redis 통합 테스트를 추가한다
+- [X] T034 [P] [US3] `src/test/java/com/example/ticketing/queue/integration/AdmissionFlowIntegrationTest.java`에 사용자 진입, admission 실행, polling을 통한 ENTERED 상태 관찰 end-to-end 통합 테스트를 추가한다
 
 ### Implementation for User Story 3
 
-- [ ] T035 [P] [US3] `src/main/resources/lua/admit_waiting_users.lua`에 Redis `KEYS` 없이 오래 기다린 waiting user를 꺼내 active key를 생성하는 Lua script를 추가한다
-- [ ] T036 [US3] `src/main/java/com/example/ticketing/queue/infrastructure/RedisAdmissionRepository.java`에 단일 event에 대해 `admit_waiting_users.lua`를 실행하고 admitted users를 반환하는 Redis admission repository를 구현한다
-- [ ] T037 [US3] `src/main/java/com/example/ticketing/queue/application/AdmissionSchedulerService.java`에 configurable rate, active TTL, oldest-first behavior, empty-queue no-op 처리를 구현한다
-- [ ] T038 [US3] `src/main/java/com/example/ticketing/queue/application/AdmissionScheduler.java`에 configured event ids 또는 Redis `KEYS`를 사용하지 않는 방식의 queue event 목록을 대상으로 scheduled admission runner를 구현한다
-- [ ] T039 [US3] `src/main/java/com/example/ticketing/queue/application/QueueMetricsService.java`에 registered, admitted, currentWaiting, currentActive, expiredLookup count를 테스트와 진단에서 조회할 수 있는 admission counter service를 구현한다
-- [ ] T040 [P] [US3] `src/test/java/com/example/ticketing/queue/application/ActiveAdmissionGuardTest.java`에 active admission이 있는 event/user만 예매 가능으로 판정하고 missing/expired active admission은 거부하는 service test를 추가한다
-- [ ] T041 [US3] `src/main/java/com/example/ticketing/queue/application/ActiveAdmissionGuard.java`에 후속 예매 기능이 재사용할 active admission 검증 컴포넌트를 구현한다
+- [X] T035 [P] [US3] `src/main/resources/lua/admit_waiting_users.lua`에 Redis `KEYS` 없이 오래 기다린 waiting user를 꺼내 active key를 생성하는 Lua script를 추가한다
+- [X] T036 [US3] `src/main/java/com/example/ticketing/queue/infrastructure/RedisAdmissionRepository.java`에 단일 event에 대해 `admit_waiting_users.lua`를 실행하고 admitted users를 반환하는 Redis admission repository를 구현한다
+- [X] T037 [US3] `src/main/java/com/example/ticketing/queue/application/AdmissionSchedulerService.java`에 configurable rate, active TTL, oldest-first behavior, empty-queue no-op 처리를 구현한다
+- [X] T038 [US3] `src/main/java/com/example/ticketing/queue/application/AdmissionScheduler.java`에 configured event ids 또는 Redis `KEYS`를 사용하지 않는 방식의 queue event 목록을 대상으로 scheduled admission runner를 구현한다
+- [X] T039 [US3] `src/main/java/com/example/ticketing/queue/application/QueueMetricsService.java`에 registered, admitted, currentWaiting, currentActive, expiredLookup count를 테스트와 진단에서 조회할 수 있는 admission counter service를 구현한다
+- [X] T040 [P] [US3] `src/test/java/com/example/ticketing/queue/application/ActiveAdmissionGuardTest.java`에 active admission이 있는 event/user만 예매 가능으로 판정하고 missing/expired active admission은 거부하는 service test를 추가한다
+- [X] T041 [US3] `src/main/java/com/example/ticketing/queue/application/ActiveAdmissionGuard.java`에 후속 예매 기능이 재사용할 active admission 검증 컴포넌트를 구현한다
 
 **Checkpoint**: 모든 user story가 독립적으로 동작해야 한다.
 

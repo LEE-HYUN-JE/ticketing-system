@@ -10,7 +10,7 @@ public record QueueProperties(
         @Min(1) int admissionRatePerSecond,
         @Min(1) int pollAfterSeconds,
         @Min(1) int activeTtlSeconds,
-        @Min(1) int tokenTtlSeconds
+        @Min(1) int tokenTtlSeconds,
+        boolean schedulerEnabled
 ) {
 }
-

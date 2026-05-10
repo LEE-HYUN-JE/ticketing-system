@@ -29,6 +29,7 @@ public class QueueEntryService {
 
         String token = queueRepository.findExistingToken(eventId, userId)
                 .orElseGet(() -> createToken(eventId, userId));
+        queueRepository.incrementRegistered();
 
         QueuePosition position = queueRepository.getWaitingPosition(eventId, userId)
                 .orElseThrow(() -> new IllegalStateException("Queue entry was not created"));
@@ -66,4 +67,3 @@ public class QueueEntryService {
         }
     }
 }
-

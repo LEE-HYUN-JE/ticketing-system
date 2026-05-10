@@ -24,5 +24,24 @@ public class QueueRedisKeys {
     public String active(String eventId, String userId) {
         return "active:%s:%s".formatted(eventId, userId);
     }
-}
 
+    public String activePrefix(String eventId) {
+        return "active:%s:".formatted(eventId);
+    }
+
+    public String activeUsers(String eventId) {
+        return "active-users:%s".formatted(eventId);
+    }
+
+    public String metricsRegistered() {
+        return "queue-metrics:registered";
+    }
+
+    public String metricsAdmitted() {
+        return "queue-metrics:admitted";
+    }
+
+    public String metricsExpiredLookup() {
+        return "queue-metrics:expired-lookup";
+    }
+}

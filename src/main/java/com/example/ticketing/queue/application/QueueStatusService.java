@@ -27,6 +27,7 @@ public class QueueStatusService {
 
         Optional<QueueTokenMapping> tokenMapping = queueRepository.findTokenMapping(queueToken);
         if (tokenMapping.isEmpty()) {
+            queueRepository.incrementExpiredLookup();
             return expired();
         }
 
@@ -45,6 +46,7 @@ public class QueueStatusService {
         if (activeTtlSeconds >= 0) {
             return new QueueStatusResponse(QueueStatus.ENTERED, null, null, null, activeTtlSeconds);
         }
+        queueRepository.incrementExpiredLookup();
         return expired();
     }
 
@@ -77,4 +79,3 @@ public class QueueStatusService {
         }
     }
 }
-
