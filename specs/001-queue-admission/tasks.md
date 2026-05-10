@@ -81,16 +81,16 @@
 
 ### Tests for User Story 2
 
-- [ ] T025 [P] [US2] `src/test/java/com/example/ticketing/queue/integration/QueueStatusApiTest.java`에 `GET /api/events/{eventId}/queue/{queueToken}`의 `WAITING`, `ENTERED`, `EXPIRED`, invalid UUID, event mismatch controller contract test를 추가한다
-- [ ] T026 [P] [US2] `src/test/java/com/example/ticketing/queue/infrastructure/RedisQueueStatusRepositoryTest.java`에 token lookup, active TTL lookup, missing token terminal state, expired token terminal state Redis 통합 테스트를 추가한다
-- [ ] T027 [P] [US2] `src/test/java/com/example/ticketing/queue/application/QueueStatusServiceTest.java`에 WAITING rank fields, ENTERED activeExpiresInSeconds, EXPIRED terminal response service test를 추가한다
+- [X] T025 [P] [US2] `src/test/java/com/example/ticketing/queue/integration/QueueStatusApiTest.java`에 `GET /api/events/{eventId}/queue/{queueToken}`의 `WAITING`, `ENTERED`, `EXPIRED`, invalid UUID, event mismatch controller contract test를 추가한다
+- [X] T026 [P] [US2] `src/test/java/com/example/ticketing/queue/infrastructure/RedisQueueStatusRepositoryTest.java`에 token lookup, active TTL lookup, missing token terminal state, expired token terminal state Redis 통합 테스트를 추가한다
+- [X] T027 [P] [US2] `src/test/java/com/example/ticketing/queue/application/QueueStatusServiceTest.java`에 WAITING rank fields, ENTERED activeExpiresInSeconds, EXPIRED terminal response service test를 추가한다
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] `src/main/java/com/example/ticketing/queue/api/QueueStatusDtos.java`에 queue status polling response DTO를 구현한다
-- [ ] T029 [US2] `src/main/java/com/example/ticketing/queue/infrastructure/RedisQueueRepository.java`에 token lookup, waiting membership check, active admission TTL lookup, terminal expired-state detection 메서드를 추가한다
-- [ ] T030 [US2] `src/main/java/com/example/ticketing/queue/application/QueueStatusService.java`에 queue token을 해석하여 `WAITING`, `ENTERED`, `EXPIRED` response를 생성하는 로직을 구현한다
-- [ ] T031 [US2] `src/main/java/com/example/ticketing/queue/api/QueueController.java`에 UUID parsing과 event mismatch handling을 포함한 `GET /api/events/{eventId}/queue/{queueToken}` endpoint를 추가한다
+- [X] T028 [P] [US2] `src/main/java/com/example/ticketing/queue/api/QueueStatusDtos.java`에 queue status polling response DTO를 구현한다
+- [X] T029 [US2] `src/main/java/com/example/ticketing/queue/infrastructure/RedisQueueRepository.java`에 token lookup, waiting membership check, active admission TTL lookup, terminal expired-state detection 메서드를 추가한다
+- [X] T030 [US2] `src/main/java/com/example/ticketing/queue/application/QueueStatusService.java`에 queue token을 해석하여 `WAITING`, `ENTERED`, `EXPIRED` response를 생성하는 로직을 구현한다
+- [X] T031 [US2] `src/main/java/com/example/ticketing/queue/api/QueueController.java`에 UUID parsing과 event mismatch handling을 포함한 `GET /api/events/{eventId}/queue/{queueToken}` endpoint를 추가한다
 
 **Checkpoint**: User Story 1과 2는 public API를 통해 독립적으로 동작해야 한다.
 

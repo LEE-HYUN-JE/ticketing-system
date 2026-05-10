@@ -80,6 +80,11 @@ public class RedisQueueRepository {
         return seconds == null ? -2 : seconds;
     }
 
+    public long getActiveTtlSeconds(String eventId, String userId) {
+        Long seconds = redisTemplate.getExpire(keys.active(eventId, userId), TimeUnit.SECONDS);
+        return seconds == null ? -2 : seconds;
+    }
+
     private static String value(Map<Object, Object> values, String key) {
         Object value = values.get(key);
         if (value == null) {
@@ -88,4 +93,3 @@ public class RedisQueueRepository {
         return value.toString();
     }
 }
-
