@@ -19,3 +19,7 @@ queue:
   active-ttl-seconds: 60
   token-ttl-seconds: 3600
   scheduler-enabled: true
+
+reservation:
+  seat-capacity: 2000
+  seat-id-prefix: seat-

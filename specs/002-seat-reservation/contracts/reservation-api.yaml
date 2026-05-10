@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: Seat Reservation API
+  version: 0.1.0
+  description: active admission을 받은 사용자의 좌석 선점과 예매 결과 조회 API 계약.
+paths:
+  /api/events/{eventId}/reservations:
+    post:
+      summary: 좌석을 예매한다
+      operationId: claimSeat
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        '200':
+          description: 좌석 예매 결과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/events/{eventId}/reservations/users/{userId}:
+    get:
+      summary: 사용자의 예매 결과를 조회한다
+      operationId: getReservation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 사용자 예매 결과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ReservationRequest:
+      type: object
+      required:
+        - userId
+        - seatId
+      properties:
+        userId:
+          type: string
+          minLength: 1
+        seatId:
+          type: string
+          example: seat-10
+    ReservationResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - RESERVED
+            - NOT_ACTIVE
+            - SEAT_ALREADY_TAKEN
+            - ALREADY_RESERVED
+            - NOT_RESERVED
+            - INVALID_SEAT
+        seatId:
+          type: string
+          nullable: true
+          example: seat-10
+        message:
+          type: string
+          nullable: true
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+

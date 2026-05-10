@@ -107,14 +107,23 @@ type: String
 value: userId
 
 reservation:user:{eventId}:{userId}
-type: String
-value: seatId
+type: Hash
+fields: seatId, status, reservedAt
 
 idempotency:{eventId}:{userId}:{key}
 type: String
 value: processing | succeeded | failed
 ttl: configurable
 ```
+
+현재 `002-seat-reservation` 기능은 full `Idempotency-Key` 처리를 후속 기능으로 남겨두고, 먼저 `reservation:user:{eventId}:{userId}`로 동일 사용자의 다중 좌석 선점을 막는다. 좌석 선점은 `claim_seat.lua`에서 다음 조건을 한 번에 검사한다.
+
+1. `active:{eventId}:{userId}` 존재 여부
+2. 기존 `reservation:user:{eventId}:{userId}` 존재 여부
+3. 기존 `seat:{eventId}:{seatId}` 소유자 존재 여부
+4. 성공 시 seat key와 user reservation hash 기록
+
+이 경로는 MySQL을 호출하지 않고 Redis `KEYS` 명령을 사용하지 않는다.
 
 ### 4. 비동기 영속화
 
