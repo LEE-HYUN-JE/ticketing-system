@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: Ticketing Reservation API
+  version: 0.3.0
+  description: 좌석 예매 요청의 Idempotency-Key 기반 중복 처리 계약
+paths:
+  /api/events/{eventId}/reservations:
+    post:
+      summary: Reserve a seat with idempotency
+      operationId: reserveSeat
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 같은 event/user/key 조합의 재시도는 최초 처리 결과를 반환한다.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+            examples:
+              reserveSeat:
+                value:
+                  userId: user-1
+                  seatId: seat-10
+      responses:
+        '200':
+          description: 예약 처리 결과. 같은 idempotency key 재시도에서는 최초 결과와 동일하다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+              examples:
+                reserved:
+                  value:
+                    status: RESERVED
+                    seatId: seat-10
+                    message: Reserved
+                alreadyReserved:
+                  value:
+                    status: ALREADY_RESERVED
+                    seatId: seat-10
+                    message: User already reserved another seat
+                notActive:
+                  value:
+                    status: NOT_ACTIVE
+                    seatId: null
+                    message: Active admission is required
+                seatTaken:
+                  value:
+                    status: SEAT_ALREADY_TAKEN
+                    seatId: seat-10
+                    message: Seat already taken
+        '400':
+          description: 요청 형식 오류 또는 Idempotency-Key 검증 실패. 좌석 선점은 수행되지 않는다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingKey:
+                  value:
+                    code: INVALID_REQUEST
+                    message: Idempotency-Key header is required
+                overlengthKey:
+                  value:
+                    code: BAD_REQUEST
+                    message: Idempotency-Key must be at most 120 characters
+components:
+  schemas:
+    ReservationRequest:
+      type: object
+      required:
+        - userId
+        - seatId
+      properties:
+        userId:
+          type: string
+          minLength: 1
+        seatId:
+          type: string
+          minLength: 1
+          example: seat-10
+    ReservationResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - RESERVED
+            - ALREADY_RESERVED
+            - SEAT_ALREADY_TAKEN
+            - NOT_ACTIVE
+        seatId:
+          type: string
+          nullable: true
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string

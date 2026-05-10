@@ -30,7 +30,7 @@ class ConcurrentSeatClaimTest extends RedisIntegrationTestSupport {
             for (int i = 1; i <= 8; i++) {
                 String userId = "user-" + i;
                 redisTemplate.opsForValue().set(queueKeys.active("holiday-2026", userId), Instant.now().toString(), Duration.ofSeconds(60));
-                calls.add(() -> repository.claimSeat("holiday-2026", userId, "seat-10", Instant.now()).status());
+                calls.add(() -> repository.claimSeat("holiday-2026", userId, "seat-10", "key-" + userId, Instant.now(), 600).status());
             }
 
             List<ReservationStatus> statuses = executor.invokeAll(calls)
@@ -51,4 +51,3 @@ class ConcurrentSeatClaimTest extends RedisIntegrationTestSupport {
         }
     }
 }
-

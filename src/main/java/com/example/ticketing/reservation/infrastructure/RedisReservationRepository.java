@@ -40,17 +40,26 @@ public class RedisReservationRepository {
     }
 
     @SuppressWarnings("unchecked")
-    public SeatClaimResult claimSeat(String eventId, String userId, String seatId, Instant reservedAt) {
+    public SeatClaimResult claimSeat(
+            String eventId,
+            String userId,
+            String seatId,
+            String idempotencyKey,
+            Instant reservedAt,
+            int idempotencyTtlSeconds
+    ) {
         List<String> result = redisTemplate.execute(
                 claimSeatScript,
                 List.of(
                         queueKeys.active(eventId, userId),
                         reservationKeys.seat(eventId, seatId),
-                        reservationKeys.reservationUser(eventId, userId)
+                        reservationKeys.reservationUser(eventId, userId),
+                        reservationKeys.idempotency(eventId, userId, idempotencyKey)
                 ),
                 seatId,
                 userId,
-                reservedAt.toString()
+                reservedAt.toString(),
+                String.valueOf(idempotencyTtlSeconds)
         );
         if (result == null || result.isEmpty()) {
             throw new IllegalStateException("Seat claim script returned no result");
@@ -73,4 +82,3 @@ public class RedisReservationRepository {
         ));
     }
 }
-

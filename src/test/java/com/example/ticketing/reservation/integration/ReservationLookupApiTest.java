@@ -37,6 +37,7 @@ class ReservationLookupApiTest extends RedisIntegrationTestSupport {
         redisTemplate.opsForValue().set(queueKeys.active("holiday-2026", "user-1"), Instant.now().toString(), Duration.ofSeconds(60));
         mockMvc.perform(post("/api/events/holiday-2026/reservations")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Idempotency-Key", "reserve-1")
                         .content("{\"userId\":\"user-1\",\"seatId\":\"seat-10\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status", is("RESERVED")));
@@ -47,4 +48,3 @@ class ReservationLookupApiTest extends RedisIntegrationTestSupport {
                 .andExpect(jsonPath("$.seatId", is("seat-10")));
     }
 }
-

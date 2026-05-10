@@ -12,5 +12,8 @@ public class ReservationRedisKeys {
     public String reservationUser(String eventId, String userId) {
         return "reservation:user:%s:%s".formatted(eventId, userId);
     }
-}
 
+    public String idempotency(String eventId, String userId, String idempotencyKey) {
+        return "idempotency:%s:%s:%s".formatted(eventId, userId, idempotencyKey);
+    }
+}

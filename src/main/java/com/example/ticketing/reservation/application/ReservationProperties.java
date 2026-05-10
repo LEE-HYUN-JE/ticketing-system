@@ -9,7 +9,8 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "reservation")
 public record ReservationProperties(
         @Min(1) int seatCapacity,
-        @NotBlank String seatIdPrefix
+        @NotBlank String seatIdPrefix,
+        @Min(1) int idempotencyTtlSeconds,
+        @Min(1) int idempotencyKeyMaxLength
 ) {
 }
-

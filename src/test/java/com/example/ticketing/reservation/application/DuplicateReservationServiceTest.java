@@ -22,12 +22,11 @@ class DuplicateReservationServiceTest extends RedisIntegrationTestSupport {
     void sameUserCannotReserveAnotherSeatInSameEvent() {
         redisTemplate.opsForValue().set(queueKeys.active("holiday-2026", "user-1"), Instant.now().toString(), Duration.ofSeconds(60));
 
-        var first = service.claimSeat("holiday-2026", "user-1", "seat-10");
-        var second = service.claimSeat("holiday-2026", "user-1", "seat-11");
+        var first = service.claimSeat("holiday-2026", "user-1", "seat-10", "key-a");
+        var second = service.claimSeat("holiday-2026", "user-1", "seat-11", "key-b");
 
         assertThat(first.status()).isEqualTo(ReservationStatus.RESERVED);
         assertThat(second.status()).isEqualTo(ReservationStatus.ALREADY_RESERVED);
         assertThat(second.seatId()).isEqualTo("seat-10");
     }
 }
-

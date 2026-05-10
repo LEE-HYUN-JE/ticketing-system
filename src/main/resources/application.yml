@@ -23,3 +23,5 @@ queue:
 reservation:
   seat-capacity: 2000
   seat-id-prefix: seat-
+  idempotency-ttl-seconds: 600
+  idempotency-key-max-length: 120
