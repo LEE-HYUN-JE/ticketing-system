@@ -1,0 +1,138 @@
+openapi: 3.0.3
+info:
+  title: Queue Admission API
+  version: 0.1.0
+  description: 예매 대기열 진입과 상태 조회를 위한 API 계약.
+paths:
+  /api/events/{eventId}/queue:
+    post:
+      summary: 예매 이벤트 대기열에 진입한다
+      operationId: enterQueue
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueEntryRequest'
+      responses:
+        '200':
+          description: 사용자가 대기열에 등록되었거나 이미 대기 상태를 가진다
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueEntryResponse'
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/events/{eventId}/queue/{queueToken}:
+    get:
+      summary: 대기열 상태를 조회한다
+      operationId: getQueueStatus
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: queueToken
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 대기열 상태
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueStatusResponse'
+        '400':
+          description: 잘못된 token 형식 또는 event 불일치
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    QueueEntryRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          minLength: 1
+    QueueEntryResponse:
+      type: object
+      required:
+        - queueToken
+        - status
+        - pollAfterSeconds
+      properties:
+        queueToken:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - WAITING
+            - ENTERED
+            - EXPIRED
+        rank:
+          type: integer
+          minimum: 1
+          nullable: true
+        totalWaiting:
+          type: integer
+          minimum: 0
+          nullable: true
+        pollAfterSeconds:
+          type: integer
+          example: 5
+    QueueStatusResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - WAITING
+            - ENTERED
+            - EXPIRED
+        rank:
+          type: integer
+          minimum: 1
+          nullable: true
+        totalWaiting:
+          type: integer
+          minimum: 0
+          nullable: true
+        pollAfterSeconds:
+          type: integer
+          nullable: true
+          example: 5
+        activeExpiresInSeconds:
+          type: integer
+          nullable: true
+          example: 60
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
