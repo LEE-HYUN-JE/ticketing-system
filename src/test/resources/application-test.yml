@@ -1,0 +1,12 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+queue:
+  admission-rate-per-second: 20
+  poll-after-seconds: 5
+  active-ttl-seconds: 60
+  token-ttl-seconds: 3600
+

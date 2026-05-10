@@ -19,13 +19,13 @@
 
 **Purpose**: 모든 story가 의존하는 Java 21 Spring Boot 프로젝트 골격, Redis 실행 환경, 테스트 기반을 만든다.
 
-- [ ] T001 `build.gradle`에 Java 21, Spring Boot, Spring Web, Spring Data Redis, Validation, Actuator, Spring Boot Test, AssertJ, Testcontainers Redis 의존성을 설정한다
-- [ ] T002 [P] `settings.gradle`에 `ticketing-system` Gradle 프로젝트 설정을 추가한다
-- [ ] T003 [P] `src/main/java/com/example/ticketing/TicketingSystemApplication.java`에 Spring Boot 애플리케이션 진입점을 만든다
-- [ ] T004 [P] `src/main/resources/application.yml`에 Redis, queue 기본값, actuator, server 설정을 추가한다
-- [ ] T005 [P] `src/test/resources/application-test.yml`에 테스트 profile Redis 설정과 deterministic queue 기본값을 추가한다
-- [ ] T006 [P] `docker-compose.yml`에 로컬 개발용 Redis 서비스를 추가한다
-- [ ] T007 [P] `src/main/java/com/example/ticketing/` 아래에 `common/config`, `common/error`, `queue/api`, `queue/application`, `queue/domain`, `queue/infrastructure` 패키지 구조를 만든다
+- [X] T001 `build.gradle`에 Java 21, Spring Boot, Spring Web, Spring Data Redis, Validation, Actuator, Spring Boot Test, AssertJ, Testcontainers Redis 의존성을 설정한다
+- [X] T002 [P] `settings.gradle`에 `ticketing-system` Gradle 프로젝트 설정을 추가한다
+- [X] T003 [P] `src/main/java/com/example/ticketing/TicketingSystemApplication.java`에 Spring Boot 애플리케이션 진입점을 만든다
+- [X] T004 [P] `src/main/resources/application.yml`에 Redis, queue 기본값, actuator, server 설정을 추가한다
+- [X] T005 [P] `src/test/resources/application-test.yml`에 테스트 profile Redis 설정과 deterministic queue 기본값을 추가한다
+- [X] T006 [P] `docker-compose.yml`에 로컬 개발용 Redis 서비스를 추가한다
+- [X] T007 [P] `src/main/java/com/example/ticketing/queue/.gitkeep`에 queue package placeholder를 만들고 이후 작업에서 `common/config`, `common/error`, `queue/api`, `queue/application`, `queue/domain`, `queue/infrastructure` 패키지 파일을 생성할 수 있게 한다
 
 ---
 
@@ -35,15 +35,15 @@
 
 **CRITICAL**: 이 phase가 끝나기 전에는 user story 구현을 시작하지 않는다.
 
-- [ ] T008 `src/main/java/com/example/ticketing/queue/application/QueueProperties.java`에 `admissionRatePerSecond`, `pollAfterSeconds`, `activeTtlSeconds`, `tokenTtlSeconds`를 가진 typed queue configuration properties를 구현한다
-- [ ] T009 `src/main/java/com/example/ticketing/common/config/RedisConfig.java`에 Lettuce 기반 `RedisTemplate`과 `StringRedisTemplate` 설정을 구현한다
-- [ ] T010 [P] `src/main/java/com/example/ticketing/common/error/ErrorResponse.java`에 API error response DTO를 구현한다
-- [ ] T011 `src/main/java/com/example/ticketing/common/error/GlobalExceptionHandler.java`에 validation error와 bad request 예외 처리를 구현한다
-- [ ] T012 [P] `src/main/java/com/example/ticketing/queue/domain/QueueStatus.java`에 `WAITING`, `ENTERED`, `EXPIRED` queue state enum을 정의한다
-- [ ] T013 [P] `src/main/java/com/example/ticketing/queue/domain/QueueModels.java`에 `QueueEntry`, `QueueTokenMapping`, `ActiveAdmission`, `QueuePosition` domain record를 정의한다
-- [ ] T014 `src/main/java/com/example/ticketing/queue/infrastructure/QueueRedisKeys.java`에 waiting, queue-token, active key naming helper를 구현한다
-- [ ] T015 `src/test/java/com/example/ticketing/support/RedisIntegrationTestSupport.java`에 Testcontainers Redis base support와 dynamic Spring Redis property 설정을 구현한다
-- [ ] T016 [P] `src/test/java/com/example/ticketing/support/NoDatabaseContextTest.java`에 datasource 없이 애플리케이션 context가 뜨는 no-MySQL guard test를 추가한다
+- [X] T008 `src/main/java/com/example/ticketing/queue/application/QueueProperties.java`에 `admissionRatePerSecond`, `pollAfterSeconds`, `activeTtlSeconds`, `tokenTtlSeconds`를 가진 typed queue configuration properties를 구현한다
+- [X] T009 `src/main/java/com/example/ticketing/common/config/RedisConfig.java`에 Lettuce 기반 `RedisTemplate`과 `StringRedisTemplate` 설정을 구현한다
+- [X] T010 [P] `src/main/java/com/example/ticketing/common/error/ErrorResponse.java`에 API error response DTO를 구현한다
+- [X] T011 `src/main/java/com/example/ticketing/common/error/GlobalExceptionHandler.java`에 validation error와 bad request 예외 처리를 구현한다
+- [X] T012 [P] `src/main/java/com/example/ticketing/queue/domain/QueueStatus.java`에 `WAITING`, `ENTERED`, `EXPIRED` queue state enum을 정의한다
+- [X] T013 [P] `src/main/java/com/example/ticketing/queue/domain/QueueModels.java`에 `QueueEntry`, `QueueTokenMapping`, `ActiveAdmission`, `QueuePosition` domain record를 정의한다
+- [X] T014 `src/main/java/com/example/ticketing/queue/infrastructure/QueueRedisKeys.java`에 waiting, queue-token, active key naming helper를 구현한다
+- [X] T015 `src/test/java/com/example/ticketing/support/RedisIntegrationTestSupport.java`에 Testcontainers Redis base support와 dynamic Spring Redis property 설정을 구현한다
+- [X] T016 [P] `src/test/java/com/example/ticketing/support/NoDatabaseContextTest.java`에 datasource 없이 애플리케이션 context가 뜨는 no-MySQL guard test를 추가한다
 
 **Checkpoint**: foundation이 준비되면 user story 구현을 시작할 수 있다.
 
@@ -57,17 +57,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T017 [P] [US1] `src/test/java/com/example/ticketing/queue/integration/QueueEntryApiTest.java`에 `POST /api/events/{eventId}/queue` 성공과 validation error controller contract test를 추가한다
-- [ ] T018 [P] [US1] `src/test/java/com/example/ticketing/queue/infrastructure/RedisQueueRepositoryTest.java`에 중복 event/user 진입과 oldest-first Sorted Set 정렬 Redis 통합 테스트를 추가한다
-- [ ] T019 [P] [US1] `src/test/java/com/example/ticketing/queue/application/QueueEntryServiceTest.java`에 token 발급, 기존 waiting state 재사용, rank 계산 service test를 추가한다
+- [X] T017 [P] [US1] `src/test/java/com/example/ticketing/queue/integration/QueueEntryApiTest.java`에 `POST /api/events/{eventId}/queue` 성공과 validation error controller contract test를 추가한다
+- [X] T018 [P] [US1] `src/test/java/com/example/ticketing/queue/infrastructure/RedisQueueRepositoryTest.java`에 중복 event/user 진입, `queue-user-token:{eventId}:{userId}` reverse index, `queue-events` registry, oldest-first Sorted Set 정렬 Redis 통합 테스트를 추가한다
+- [X] T019 [P] [US1] `src/test/java/com/example/ticketing/queue/application/QueueEntryServiceTest.java`에 token 발급, 기존 waiting state 재사용, rank 계산 service test를 추가한다
 
 ### Implementation for User Story 1
 
-- [ ] T020 [P] [US1] `src/main/java/com/example/ticketing/queue/api/QueueEntryDtos.java`에 queue entry request/response DTO를 구현한다
-- [ ] T021 [US1] `src/main/java/com/example/ticketing/queue/infrastructure/RedisQueueRepository.java`에 token mapping 생성, `waiting:{eventId}` idempotent 사용자 추가, 기존 token mapping 조회, rank 계산, waiting count 조회 메서드를 구현한다
-- [ ] T022 [US1] `src/main/java/com/example/ticketing/queue/application/QueueEntryService.java`에 UUID queue token 발급, event/user 중복 waiting position 방지, `WAITING` 상태와 rank/totalWaiting/pollAfterSeconds 반환 로직을 구현한다
-- [ ] T023 [US1] `src/main/java/com/example/ticketing/queue/api/QueueController.java`에 eventId와 userId validation을 포함한 `POST /api/events/{eventId}/queue` endpoint를 구현한다
-- [ ] T024 [US1] `src/main/java/com/example/ticketing/TicketingSystemApplication.java`에 queue configuration properties binding을 연결하고 기본값 검증이 가능하게 한다
+- [X] T020 [P] [US1] `src/main/java/com/example/ticketing/queue/api/QueueEntryDtos.java`에 queue entry request/response DTO를 구현한다
+- [X] T021 [US1] `src/main/java/com/example/ticketing/queue/infrastructure/RedisQueueRepository.java`에 token mapping 생성, `queue-user-token:{eventId}:{userId}` reverse index 저장/조회, `queue-events` event registry 등록, `waiting:{eventId}` idempotent 사용자 추가, 기존 token mapping 조회, rank 계산, waiting count 조회 메서드를 구현한다
+- [X] T022 [US1] `src/main/java/com/example/ticketing/queue/application/QueueEntryService.java`에 UUID queue token 발급, event/user 중복 waiting position 방지, `WAITING` 상태와 rank/totalWaiting/pollAfterSeconds 반환 로직을 구현한다
+- [X] T023 [US1] `src/main/java/com/example/ticketing/queue/api/QueueController.java`에 eventId와 userId validation을 포함한 `POST /api/events/{eventId}/queue` endpoint를 구현한다
+- [X] T024 [US1] `src/main/java/com/example/ticketing/TicketingSystemApplication.java`에 queue configuration properties binding을 연결하고 기본값 검증이 가능하게 한다
 
 **Checkpoint**: User Story 1은 독립적으로 동작하고 테스트 가능해야 한다.
 
@@ -114,7 +114,9 @@
 - [ ] T036 [US3] `src/main/java/com/example/ticketing/queue/infrastructure/RedisAdmissionRepository.java`에 단일 event에 대해 `admit_waiting_users.lua`를 실행하고 admitted users를 반환하는 Redis admission repository를 구현한다
 - [ ] T037 [US3] `src/main/java/com/example/ticketing/queue/application/AdmissionSchedulerService.java`에 configurable rate, active TTL, oldest-first behavior, empty-queue no-op 처리를 구현한다
 - [ ] T038 [US3] `src/main/java/com/example/ticketing/queue/application/AdmissionScheduler.java`에 configured event ids 또는 Redis `KEYS`를 사용하지 않는 방식의 queue event 목록을 대상으로 scheduled admission runner를 구현한다
-- [ ] T039 [US3] `src/main/java/com/example/ticketing/queue/application/QueueMetricsService.java`에 registered, admitted, expired, waiting total을 테스트와 진단에서 조회할 수 있는 admission counter service를 구현한다
+- [ ] T039 [US3] `src/main/java/com/example/ticketing/queue/application/QueueMetricsService.java`에 registered, admitted, currentWaiting, currentActive, expiredLookup count를 테스트와 진단에서 조회할 수 있는 admission counter service를 구현한다
+- [ ] T040 [P] [US3] `src/test/java/com/example/ticketing/queue/application/ActiveAdmissionGuardTest.java`에 active admission이 있는 event/user만 예매 가능으로 판정하고 missing/expired active admission은 거부하는 service test를 추가한다
+- [ ] T041 [US3] `src/main/java/com/example/ticketing/queue/application/ActiveAdmissionGuard.java`에 후속 예매 기능이 재사용할 active admission 검증 컴포넌트를 구현한다
 
 **Checkpoint**: 모든 user story가 독립적으로 동작해야 한다.
 
@@ -124,12 +126,13 @@
 
 **Purpose**: 문서, smoke test 준비, 전체 story 검증을 마무리한다.
 
-- [ ] T040 [P] `docs/load-test-plan.md`에 100 virtual user와 admission rate 20 users/s 기준 queue-only smoke test 절차를 추가한다
-- [ ] T041 [P] `docs/architecture.md`에 Redis key model, no-MySQL queue path, scheduler behavior, future reservation boundary를 반영한다
-- [ ] T042 `specs/001-queue-admission/quickstart.md`에 WAITING, ENTERED, EXPIRED 상태별 curl 검증 명령과 기대 응답을 추가한다
-- [ ] T043 `src/test/java/com/example/ticketing/` 테스트를 대상으로 `./gradlew test`를 실행하고 실패를 수정한다
-- [ ] T044 `docker compose up -d redis`를 실행한 뒤 `specs/001-queue-admission/quickstart.md`의 manual API flow를 검증한다
-- [ ] T045 `src/main/java/com/example/ticketing/queue/`의 Redis access path를 검토하여 queue registration, status lookup, scheduler가 Redis `KEYS`와 MySQL을 사용하지 않는지 확인한다
+- [ ] T042 [P] `k6-load-test/queue-admission.js`에 100 VU smoke preset과 30,000 VU queue-only preset을 가진 부하 테스트 스크립트를 추가한다
+- [ ] T043 [P] `docs/load-test-plan.md`에 100 virtual user smoke test, 30,000 virtual user queue-only test, 로컬 머신 조건 기록 항목, admission rate 20/300 users/s 검증 절차를 추가한다
+- [ ] T044 [P] `docs/architecture.md`에 Redis key model, `queue-user-token:{eventId}:{userId}` reverse index, `queue-events` registry, no-MySQL queue path, scheduler behavior, active admission guard, future reservation boundary를 반영한다
+- [ ] T045 `specs/001-queue-admission/quickstart.md`에 WAITING, ENTERED, EXPIRED 상태별 curl 검증 명령과 기대 응답을 추가한다
+- [ ] T046 `src/test/java/com/example/ticketing/` 테스트를 대상으로 `./gradlew test`를 실행하고 실패를 수정한다
+- [ ] T047 `docker compose up -d redis`를 실행한 뒤 `specs/001-queue-admission/quickstart.md`의 manual API flow를 검증한다
+- [ ] T048 `src/main/java/com/example/ticketing/queue/`의 Redis access path를 검토하여 queue registration, status lookup, scheduler, active admission guard가 Redis `KEYS`와 MySQL을 사용하지 않는지 확인한다
 
 ---
 
@@ -164,7 +167,8 @@
 - US1 테스트 T017-T019는 병렬 진행 가능하며, T020도 repository/service 구현 준비와 병렬 진행 가능하다.
 - US2 테스트 T025-T027과 DTO 작업 T028은 US1 contract 이해 후 병렬 진행 가능하다.
 - US3 테스트 T032-T034와 Lua script 작업 T035는 foundational Redis support 이후 병렬 진행 가능하다.
-- 문서 polish 작업 T040과 T041은 behavior가 안정된 뒤 병렬 진행 가능하다.
+- Active admission guard test T040은 scheduler active key 구현 이후 T041 구현과 테스트 우선 흐름으로 진행할 수 있다.
+- 문서 polish 작업 T043과 T044는 behavior가 안정된 뒤 병렬 진행 가능하다.
 
 ## Parallel Example: User Story 1
 
@@ -188,6 +192,7 @@ Task: "T027 [P] [US2] WAITING, ENTERED, EXPIRED service test 작성"
 Task: "T032 [P] [US3] scheduler service test 작성"
 Task: "T033 [P] [US3] atomic pop-to-active와 active TTL Redis integration test 작성"
 Task: "T035 [P] [US3] admit_waiting_users.lua 작성"
+Task: "T040 [P] [US3] active admission guard service test 작성"
 ```
 
 ---
@@ -207,7 +212,8 @@ Task: "T035 [P] [US3] admit_waiting_users.lua 작성"
 2. US1을 전달하여 reservation system이 직접 traffic spike를 받지 않도록 보호한다.
 3. US2를 전달하여 client가 downstream reservation API를 호출하지 않고 queue state를 polling할 수 있게 한다.
 4. US3을 전달하여 controlled admission이 waiting user를 TTL-bound active user로 전환하게 한다.
-5. 문서, smoke test, no-KEYS/no-MySQL verification을 마무리한다.
+5. active admission guard로 후속 reservation 기능의 진입 계약을 고정한다.
+6. 문서, smoke/load test, no-KEYS/no-MySQL verification을 마무리한다.
 
 ### Parallel Team Strategy
 

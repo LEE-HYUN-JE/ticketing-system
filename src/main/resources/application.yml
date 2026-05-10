@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+queue:
+  admission-rate-per-second: 300
+  poll-after-seconds: 5
+  active-ttl-seconds: 60
+  token-ttl-seconds: 3600
+

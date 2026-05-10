@@ -42,6 +42,11 @@ waiting:{eventId}
 type: ZSET
 member: userId
 score: request timestamp
+
+queue-events
+type: SET
+member: eventId
+purpose: scheduler가 Redis KEYS 없이 입장 처리 대상 event id를 찾기 위한 registry
 ```
 
 ## QueueToken
@@ -62,6 +67,12 @@ queue-token:{token}
 type: HASH
 fields: eventId, userId, createdAt
 ttl: configurable; 일반적인 load test 대기 시간보다 길어야 함
+
+queue-user-token:{eventId}:{userId}
+type: STRING
+value: token
+ttl: queue-token:{token}과 동일
+purpose: 중복 진입 요청에서 Redis KEYS 없이 기존 token을 조회하기 위한 reverse index
 ```
 
 ## ActiveAdmission
@@ -83,6 +94,23 @@ type: STRING
 value: enteredAt
 ttl: 기본 60초
 ```
+
+## QueueMetrics
+
+테스트와 진단에서 queue 동작 결과를 집계하기 위한 관찰 값이다.
+
+Fields:
+
+- `registeredCount`: queue entry 요청이 수락된 횟수
+- `admittedCount`: scheduler가 active admission으로 전환한 횟수
+- `currentWaitingCount`: 현재 waiting queue에 남아 있는 사용자 수
+- `currentActiveCount`: 현재 TTL이 살아 있는 active admission 수
+- `expiredLookupCount`: 상태 조회 또는 active admission 검증 중 EXPIRED로 판정된 횟수
+
+Notes:
+
+- Redis TTL로 삭제된 active key의 전체 개수를 정확히 세지 않는다.
+- `expiredLookupCount`는 사용자가 token polling 또는 admission 검증을 시도했을 때 terminal non-active 상태로 판정된 횟수다.
 
 State transitions:
 

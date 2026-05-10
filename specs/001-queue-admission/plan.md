@@ -17,7 +17,7 @@ Ticketing Traffic Lab의 첫 번째 트래픽 제어 기능을 구현한다. 사
 **Testing**: JUnit 5, AssertJ, Spring Boot Test, Testcontainers Redis  
 **Target Platform**: Docker Compose를 사용하는 로컬 macOS 개발 환경  
 **Project Type**: Backend web service  
-**Performance Goals**: 5초 polling 기준 30,000 virtual-user 대기열 진입 시나리오를 지원하고, queue path에서 DB 접근을 방지한다.  
+**Performance Goals**: 5초 polling 기준 30,000 virtual-user queue-only 부하 테스트 시나리오를 실행 가능하게 하고, queue path에서 DB 접근을 방지한다.  
 **Constraints**: 기본 admission rate 300 users/s, 기본 active token TTL 60s, 기본 polling hint 5s, 요청 및 scheduler 경로에서 Redis KEYS 금지  
 **Scale/Scope**: 첫 기능은 단일 Spring Boot 애플리케이션으로 구현하되, 이후 queue, reservation, worker 책임을 분리할 수 있도록 패키지 경계를 유지한다.
 
@@ -69,16 +69,24 @@ src/main/resources/
 src/test/java/com/example/ticketing/
 ├── queue/
 │   ├── application/
+│   ├── infrastructure/
 │   └── integration/
 └── support/
 
 src/test/resources/
 └── application-test.yml
 
+k6-load-test/
+└── queue-admission.js
+
 docker-compose.yml
 ```
 
 **Structure Decision**: 로컬 실험을 위해 하나의 Spring Boot 서비스를 사용한다. 단, 이후 seat reservation, idempotency, persistence worker 기능을 섞지 않도록 queue 코드는 전용 패키지에 둔다.
+
+**Admission Guard Decision**: 첫 기능은 좌석 예매 API를 구현하지 않는다. 대신 후속 예매 기능이 재사용할 `ActiveAdmissionGuard`를 queue application package에 두어 event/user가 active admission을 가지고 있는지 Redis hot path에서 검증한다.
+
+**Event Discovery Decision**: scheduler는 Redis `KEYS`를 사용하지 않는다. queue entry가 `queue-events` SET에 event id를 등록하고 scheduler는 이 registry를 읽어 입장 처리 대상을 순회한다.
 
 ## Complexity Tracking
 

@@ -77,10 +77,10 @@
 - **FR-009**: 시스템은 오래 기다린 사용자부터 입장시켜야 한다.
 - **FR-010**: 시스템은 admission rate를 설정할 수 있어야 하며, 기본값은 초당 300명이다.
 - **FR-011**: 시스템은 active admission에 기본 60초 TTL을 적용해야 한다.
-- **FR-012**: 시스템은 active admission이 없는 사용자가 downstream 예매 기능에서 예매 가능 사용자로 취급되지 않도록 해야 한다.
+- **FR-012**: 시스템은 후속 예매 기능이 재사용할 수 있는 active admission 검증 컴포넌트를 제공해야 하며, active admission이 없는 event/user 조합은 예매 가능 사용자로 판정되면 안 된다.
 - **FR-013**: 시스템은 대기열 등록과 대기 상태 조회에서 RDB 접근을 피해야 한다.
 - **FR-014**: 시스템은 30,000 virtual user가 대기열에 진입하는 목표 부하 테스트 시나리오를 지원해야 한다.
-- **FR-015**: 시스템은 테스트가 queue registration 수, active admission 수, expired admission 수를 집계할 수 있는 결과 정보를 제공해야 한다.
+- **FR-015**: 시스템은 테스트가 queue registration 수, active admission 수, 현재 waiting 수, 현재 active 수, EXPIRED 상태로 판정된 조회 수를 집계할 수 있는 결과 정보를 제공해야 한다.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -93,7 +93,7 @@
 
 ### Measurable Outcomes
 
-- **SC-001**: 30,000 virtual user가 하나의 이벤트에 진입해도 대기열 등록과 상태 조회는 MySQL을 호출하지 않는다.
+- **SC-001**: 문서화된 로컬 머신 조건에서 30,000 virtual user가 하나의 이벤트에 진입하는 queue-only 부하 테스트를 실행할 수 있으며, 대기열 등록과 상태 조회는 MySQL을 호출하지 않는다.
 - **SC-002**: 동일 event id와 user id의 중복 진입 시도는 중복 대기 순번 0건을 보장한다.
 - **SC-003**: WAITING 상태 응답은 순번, 전체 대기자 수, 5초 poll-after 힌트를 포함한다.
 - **SC-004**: 기본 admission rate에서 scheduler는 1초 구간에 300명을 초과하여 입장시키지 않는다.
@@ -103,9 +103,11 @@
 ## Assumptions
 
 - 첫 번째 기능은 대기열 입장만 다룬다. 좌석 선택, 결제, 예매 영속화, 멱등성 있는 예매 요청은 이후 기능에서 다룬다.
+- 첫 번째 기능은 좌석 예매 API를 구현하지 않지만, 후속 예매 API가 호출할 active admission 검증 컴포넌트는 포함한다.
 - queue token은 UUID로 표현한다.
 - 기본 polling interval은 5초다.
 - 기본 active token TTL은 60초다.
 - 기본 admission rate는 초당 300명이다.
 - 로컬 30,000명 시나리오는 30,000개의 실제 브라우저가 아니라 virtual user 부하 테스트다.
+- EXPIRED 상태 집계는 Redis TTL로 삭제된 key의 총량이 아니라, 상태 조회 또는 검증 과정에서 EXPIRED로 판정된 횟수를 의미한다.
 - 동일 timestamp가 발생할 경우의 보조 정렬 기준은 plan 단계에서 결정할 수 있다.
