@@ -183,6 +183,24 @@ queue entries: 10,068
 
 로그도 같은 맥락에서 정리했다. 요청마다 `INFO` 로그를 찍는 대신 k6 summary JSON, Redis cardinality, 동시성 테스트, 결과 문서를 남겼다. 1초 10,000 요청 조건에서 request log는 관측성이 아니라 병목이 되기 쉽기 때문이다.
 
+## 30,000/s로 올리면 어떻게 될까?
+
+같은 fast queue entry 구현에서 rate만 30,000/s로 올린 실험도 했다. 결과는 실패였다.
+
+```text
+executor: constant-arrival-rate
+rate: 30,000/s
+duration: 1s
+http_req_failed: 72.61%
+http_req_duration p95: 10.62s
+queue entries: 6,192
+대표 에러: can't assign requested address, EOF
+```
+
+이 실패는 꽤 중요한 데이터다. 대표 에러가 `can't assign requested address`였기 때문에, 애플리케이션 코드가 500을 반환한 상황이라기보다 k6가 로컬에서 순간적으로 너무 많은 outbound TCP connection을 만들다가 OS socket/ephemeral port 한계에 먼저 닿은 것으로 보는 편이 타당하다.
+
+즉 이 프로젝트에서 “검증된 로컬 단일 머신 기준선”은 1초 10,000건 queue entry다. 30,000/s를 계속 검증하려면 부하 발생기를 분리하거나, ramping 방식으로 유입을 나누고, OS TCP 설정과 Redis 배치까지 함께 다뤄야 한다.
+
 ## 결론
 
 이번 실험은 “30,000명 queue-only 테스트 성공”이 아니라 “현재 로컬 기본 설정에서는 연결 계층이 먼저 병목이 된다”는 기준선을 얻은 실험이다.

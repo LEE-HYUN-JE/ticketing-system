@@ -64,6 +64,7 @@
 최근 검증 결과:
 
 - [1초 10,000건 Queue Entry 부하 테스트 통과 결과](docs/load-test-results/005-fast-queue-entry-10000-1s.md)
+- [1초 30,000건 Queue Entry 부하 테스트 한계 결과](docs/load-test-results/005-fast-queue-entry-30000-1s.md)
 - [30,000명 Queue-Only 부하 테스트 블로그 초안](docs/blog/queue-admission-30000.md)
 
 ## 예정 기술 스택
