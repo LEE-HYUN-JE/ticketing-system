@@ -1,11 +1,18 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
+import { Counter } from 'k6/metrics';
 
 const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
 const eventId = __ENV.EVENT_ID || `queue-30000-${Date.now()}`;
 const pollAfterSeconds = Number(__ENV.POLL_AFTER_SECONDS || '5');
 const maxPolls = Number(__ENV.MAX_POLLS || '12');
+
+const queueEntries = new Counter('queue_entries');
+const waitingResponses = new Counter('queue_status_waiting');
+const enteredResponses = new Counter('queue_status_entered');
+const expiredResponses = new Counter('queue_status_expired');
+const invalidStatusResponses = new Counter('queue_status_invalid');
 
 export const options = {
   scenarios: {
@@ -56,6 +63,10 @@ function enterQueue(userId) {
     },
   });
 
+  if (accepted) {
+    queueEntries.add(1);
+  }
+
   return accepted ? parseJson(response) : null;
 }
 
@@ -74,12 +85,30 @@ function pollUntilTerminal(queueToken) {
       'queue status is valid': () => ['WAITING', 'ENTERED', 'EXPIRED'].includes(body && body.status),
     });
 
+    recordStatus(body && body.status);
+
     if (body && (body.status === 'ENTERED' || body.status === 'EXPIRED')) {
       return;
     }
 
     sleep(body && body.pollAfterSeconds ? body.pollAfterSeconds : pollAfterSeconds);
   }
+}
+
+function recordStatus(status) {
+  if (status === 'WAITING') {
+    waitingResponses.add(1);
+    return;
+  }
+  if (status === 'ENTERED') {
+    enteredResponses.add(1);
+    return;
+  }
+  if (status === 'EXPIRED') {
+    expiredResponses.add(1);
+    return;
+  }
+  invalidStatusResponses.add(1);
 }
 
 function parseJson(response) {

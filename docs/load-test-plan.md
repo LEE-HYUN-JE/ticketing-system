@@ -166,6 +166,10 @@ Queue API p95 latency within recorded local target
 
 ## 결과 기록 포맷
 
+이번 30,000명 queue-only 실행 결과:
+
+- [005-queue-admission-30000.md](load-test-results/005-queue-admission-30000.md)
+
 각 테스트 결과는 다음 형식으로 기록합니다.
 
 ```text

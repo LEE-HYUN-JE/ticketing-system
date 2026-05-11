@@ -2,7 +2,7 @@
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read:
 
-- specs/004-async-persistence/plan.md
+- specs/005-load-test/plan.md
 
 Project documentation language:
 
