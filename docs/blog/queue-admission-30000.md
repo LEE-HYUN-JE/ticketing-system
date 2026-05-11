@@ -133,6 +133,24 @@ queue entries: 808
 
 이 결과는 “숫자를 줄이면 해결된다”보다 “동시 시작 방식이 문제다”에 더 가깝다. 다음 실험은 10,000명 또는 30,000명을 유지하되, 한 번에 여는 방식 대신 ramping 방식으로 바꾸는 편이 더 의미 있다.
 
+## 추가 실험: 1초 동안 10,000건 entry-only 요청
+
+다음으로 polling을 제거하고 `POST /queue`만 1초 동안 10,000건 보내는 실험을 했다. 이 실험은 `shared-iterations`가 아니라 `constant-arrival-rate`를 사용했다.
+
+```text
+executor: constant-arrival-rate
+rate: 10,000/s
+duration: 1s
+http_req_failed: 23.81%
+http_req_duration p95: 1.18s
+queue entries: 7,628
+대표 에러: connection reset by peer
+```
+
+결과는 이전 full flow보다 훨씬 좋아졌다. 10,000명 full flow에서는 성공 진입이 808건이었지만, entry-only에서는 7,628건까지 올라갔다. 다만 여전히 실패율 5% 기준은 넘지 못했다.
+
+이 실험으로 최소한 두 가지는 분리해서 볼 수 있게 됐다. 첫째, polling을 제거하면 성공률은 크게 올라간다. 둘째, `POST /queue`만 보더라도 1초 10,000건은 현재 로컬 단일 WAS 설정에서 안정 구간을 넘어선다.
+
 ## 결론
 
 이번 실험은 “30,000명 queue-only 테스트 성공”이 아니라 “현재 로컬 기본 설정에서는 연결 계층이 먼저 병목이 된다”는 기준선을 얻은 실험이다.

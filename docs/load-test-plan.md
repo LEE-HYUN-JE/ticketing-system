@@ -173,6 +173,7 @@ Queue API p95 latency within recorded local target
 추가 비교 실행 결과:
 
 - [005-queue-admission-10000.md](load-test-results/005-queue-admission-10000.md)
+- [005-queue-entry-10000-1s.md](load-test-results/005-queue-entry-10000-1s.md)
 
 각 테스트 결과는 다음 형식으로 기록합니다.
 
