@@ -47,6 +47,17 @@
 
 자세한 설계는 [docs/architecture.md](docs/architecture.md)를 참고합니다.
 
+## 컴포넌트 문서
+
+코드를 직접 열기 전에 전체 구조를 빠르게 파악할 수 있도록 컴포넌트별 문서를 분리했습니다. 각 문서는 폴더 구조, 주요 흐름, 클래스별 책임을 설명합니다.
+
+- [Queue 컴포넌트](docs/components/queue.md): 대기열 진입, token 발급, 상태 조회, active admission 전환
+- [Reservation 컴포넌트](docs/components/reservation.md): 좌석 선점, idempotency, Redis Stream 기반 비동기 저장
+- [Common 컴포넌트](docs/components/common.md): Redis 설정, scheduling 설정, 전역 에러 응답
+- [Runtime Resources](docs/components/runtime-resources.md): `application.yml`, Redis Lua script, MySQL schema
+- [전체 아키텍처](docs/architecture.md): 시스템 흐름과 설계 배경
+- [부하 테스트 계획](docs/load-test-plan.md): 성능 검증 방식과 결과 문서 링크
+
 ## 검증 전략
 
 성능과 정합성은 부하 테스트로 검증합니다.
