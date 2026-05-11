@@ -1,5 +1,12 @@
 server:
   port: 8080
+  tomcat:
+    threads:
+      max: 400
+      min-spare: 50
+    max-connections: 20000
+    accept-count: 10000
+    connection-timeout: 5s
 
 spring:
   datasource:

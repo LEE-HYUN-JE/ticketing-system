@@ -2,6 +2,7 @@ package com.example.ticketing.queue.integration;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,8 +28,8 @@ class QueueEntryApiTest extends RedisIntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.queueToken", matchesPattern("[0-9a-fA-F-]{36}")))
                 .andExpect(jsonPath("$.status", is("WAITING")))
-                .andExpect(jsonPath("$.rank", is(1)))
-                .andExpect(jsonPath("$.totalWaiting", is(1)))
+                .andExpect(jsonPath("$.rank", nullValue()))
+                .andExpect(jsonPath("$.totalWaiting", nullValue()))
                 .andExpect(jsonPath("$.pollAfterSeconds", is(5)));
     }
 
@@ -41,4 +42,3 @@ class QueueEntryApiTest extends RedisIntegrationTestSupport {
                 .andExpect(jsonPath("$.code", is("INVALID_REQUEST")));
     }
 }
-

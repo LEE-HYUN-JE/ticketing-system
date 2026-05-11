@@ -151,6 +151,38 @@ queue entries: 7,628
 
 이 실험으로 최소한 두 가지는 분리해서 볼 수 있게 됐다. 첫째, polling을 제거하면 성공률은 크게 올라간다. 둘째, `POST /queue`만 보더라도 1초 10,000건은 현재 로컬 단일 WAS 설정에서 안정 구간을 넘어선다.
 
+## 최종 개선: hot path와 Tomcat 수용 계층을 함께 정리
+
+마지막으로 `POST /queue`의 hot path를 줄였다. 첫 응답에서 `rank`, `totalWaiting` 계산을 제거하고, Redis 등록은 Lua script로 원자화했다. 동일 `event/user` 중복 진입은 동시에 100개 요청이 들어와도 하나의 token과 하나의 waiting member로 수렴하도록 테스트했다.
+
+여기서 한 번 더 배운 점이 있었다. hot path만 줄였을 때는 10,000/s 테스트가 바로 성공하지 않았다. 순간 connection reset이 계속 발생했기 때문이다. 그래서 embedded Tomcat 설정을 명시했다.
+
+```yaml
+server:
+  tomcat:
+    threads:
+      max: 400
+      min-spare: 50
+    max-connections: 20000
+    accept-count: 10000
+    connection-timeout: 5s
+```
+
+최종 결과:
+
+```text
+executor: constant-arrival-rate
+rate: 10,000/s
+duration: 1s
+http_req_failed: 0.00%
+http_req_duration p95: 825.15ms
+queue entries: 10,068
+```
+
+이 결과는 “Redis를 썼더니 빨라졌다” 같은 단순한 결론이 아니다. 대기열 진입 API의 hot path를 줄이고, 중복 진입을 원자적으로 처리하고, WAS connection/thread/backlog 설정까지 맞춰야 burst traffic을 받아낼 수 있다는 결론에 가깝다.
+
+로그도 같은 맥락에서 정리했다. 요청마다 `INFO` 로그를 찍는 대신 k6 summary JSON, Redis cardinality, 동시성 테스트, 결과 문서를 남겼다. 1초 10,000 요청 조건에서 request log는 관측성이 아니라 병목이 되기 쉽기 때문이다.
+
 ## 결론
 
 이번 실험은 “30,000명 queue-only 테스트 성공”이 아니라 “현재 로컬 기본 설정에서는 연결 계층이 먼저 병목이 된다”는 기준선을 얻은 실험이다.
