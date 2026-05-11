@@ -165,26 +165,20 @@ curl -s http://localhost:8080/api/events/holiday-2026/queue/00000000-0000-0000-0
 }
 ```
 
-## 로컬 부하 테스트 Smoke 목표
+## 로컬 부하 테스트 목표
 
-전체 30,000 virtual-user 시나리오를 추가하기 전에 더 작은 queue-only smoke test를 사용한다.
+이 프로젝트의 queue-only 부하 테스트는 30,000 virtual user 시나리오만 대상으로 한다.
 
 ```text
-virtual users: 100
+virtual users: 30,000
 polling interval: 5 seconds
-admission rate: 20 users/second
+admission rate: 300 users/second
 ```
 
-중복 사용자가 두 번 대기열에 들어가지 않고, active admission이 설정된 rate를 넘지 않으면 queue 기능은 smoke target을 통과한 것으로 본다.
+중복 사용자가 두 번 대기열에 들어가지 않고, Queue API가 `WAITING`, `ENTERED`, `EXPIRED` 상태 polling을 계속 처리하며, active admission이 설정된 rate를 넘지 않으면 queue 기능은 목표 테스트를 통과한 것으로 본다.
 
 실행:
 
 ```bash
-PRESET=smoke BASE_URL=http://localhost:8080 k6 run k6-load-test/queue-admission.js
-```
-
-30,000명 queue-only preset:
-
-```bash
-PRESET=queue_only_30000 BASE_URL=http://localhost:8080 k6 run k6-load-test/queue-admission.js
+BASE_URL=http://localhost:8080 k6 run k6-load-test/queue-admission.js
 ```

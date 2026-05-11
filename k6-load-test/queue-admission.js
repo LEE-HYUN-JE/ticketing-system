@@ -2,43 +2,24 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
 
-const preset = __ENV.PRESET || 'smoke';
 const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
-const eventId = __ENV.EVENT_ID || `queue-${preset}-${Date.now()}`;
+const eventId = __ENV.EVENT_ID || `queue-30000-${Date.now()}`;
 const pollAfterSeconds = Number(__ENV.POLL_AFTER_SECONDS || '5');
 const maxPolls = Number(__ENV.MAX_POLLS || '12');
-
-const presets = {
-  smoke: {
-    vus: 100,
-    iterations: 100,
-    thresholds: {
-      http_req_failed: ['rate<0.01'],
-      http_req_duration: ['p(95)<1000'],
-    },
-  },
-  queue_only_30000: {
-    vus: 30000,
-    iterations: 30000,
-    thresholds: {
-      http_req_failed: ['rate<0.05'],
-      http_req_duration: ['p(95)<2000'],
-    },
-  },
-};
-
-const selected = presets[preset] || presets.smoke;
 
 export const options = {
   scenarios: {
     queue_admission: {
       executor: 'shared-iterations',
-      vus: selected.vus,
-      iterations: selected.iterations,
+      vus: Number(__ENV.VUS || '30000'),
+      iterations: Number(__ENV.ITERATIONS || '30000'),
       maxDuration: __ENV.MAX_DURATION || '10m',
     },
   },
-  thresholds: selected.thresholds,
+  thresholds: {
+    http_req_failed: ['rate<0.05'],
+    http_req_duration: ['p(95)<2000'],
+  },
 };
 
 export default function () {
@@ -62,7 +43,7 @@ function enterQueue(userId) {
       },
       tags: {
         api: 'queue-entry',
-        preset,
+        scenario: 'queue-admission-30000',
       },
     }
   );
@@ -83,7 +64,7 @@ function pollUntilTerminal(queueToken) {
     const response = http.get(`${baseUrl}/api/events/${eventId}/queue/${queueToken}`, {
       tags: {
         api: 'queue-status',
-        preset,
+        scenario: 'queue-admission-30000',
       },
     });
 

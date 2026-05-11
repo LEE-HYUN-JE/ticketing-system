@@ -124,10 +124,10 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-**Purpose**: 문서, smoke test 준비, 전체 story 검증을 마무리한다.
+**Purpose**: 문서, 30,000명 queue-only 부하 테스트 준비, 전체 story 검증을 마무리한다.
 
-- [X] T042 [P] `k6-load-test/queue-admission.js`에 100 VU smoke preset과 30,000 VU queue-only preset을 가진 부하 테스트 스크립트를 추가한다
-- [X] T043 [P] `docs/load-test-plan.md`에 100 virtual user smoke test, 30,000 virtual user queue-only test, 로컬 머신 조건 기록 항목, admission rate 20/300 users/s 검증 절차를 추가한다
+- [X] T042 [P] `k6-load-test/queue-admission.js`에 30,000 VU queue-only 부하 테스트 스크립트를 추가한다
+- [X] T043 [P] `docs/load-test-plan.md`에 30,000 virtual user queue-only test, 로컬 머신 조건 기록 항목, admission rate 300 users/s 검증 절차를 추가한다
 - [X] T044 [P] `docs/architecture.md`에 Redis key model, `queue-user-token:{eventId}:{userId}` reverse index, `queue-events` registry, no-MySQL queue path, scheduler behavior, active admission guard, future reservation boundary를 반영한다
 - [X] T045 `specs/001-queue-admission/quickstart.md`에 WAITING, ENTERED, EXPIRED 상태별 curl 검증 명령과 기대 응답을 추가한다
 - [X] T046 `src/test/java/com/example/ticketing/` 테스트를 대상으로 `./gradlew test`를 실행하고 실패를 수정한다
@@ -213,7 +213,7 @@ Task: "T040 [P] [US3] active admission guard service test 작성"
 3. US2를 전달하여 client가 downstream reservation API를 호출하지 않고 queue state를 polling할 수 있게 한다.
 4. US3을 전달하여 controlled admission이 waiting user를 TTL-bound active user로 전환하게 한다.
 5. active admission guard로 후속 reservation 기능의 진입 계약을 고정한다.
-6. 문서, smoke/load test, no-KEYS/no-MySQL verification을 마무리한다.
+6. 문서, 30,000명 queue-only load test, no-KEYS/no-MySQL verification을 마무리한다.
 
 ### Parallel Team Strategy
 

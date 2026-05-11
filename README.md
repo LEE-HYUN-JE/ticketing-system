@@ -81,7 +81,7 @@
 2. `002-seat-reservation`: 좌석 조회, 무작위 좌석 선택, Redis Lua 기반 좌석 선점
 3. `003-idempotency`: Idempotency-Key 기반 중복 요청 차단
 4. `004-async-persistence`: 예매 성공 이벤트 비동기 DB 저장
-5. `005-load-test`: 3,000명, 10,000명, 30,000명 부하 테스트
+5. `005-load-test`: 30,000명 queue-only 부하 테스트
 6. `006-observability-docs`: 테스트 결과와 설계 결정 문서화
 
 ## 예상 저장소 구조
