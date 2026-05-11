@@ -1,0 +1,227 @@
+package com.example.ticketing.reservation.persistence;
+
+import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.connection.stream.ByteRecord;
+import org.springframework.data.redis.connection.stream.Consumer;
+import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.PendingMessage;
+import org.springframework.data.redis.connection.stream.PendingMessages;
+import org.springframework.data.redis.connection.stream.ReadOffset;
+import org.springframework.data.redis.connection.stream.RecordId;
+import org.springframework.data.redis.connection.stream.StreamOffset;
+import org.springframework.data.redis.connection.stream.StreamReadOptions;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ReservationPersistenceWorker {
+
+    private static final Logger log = LoggerFactory.getLogger(ReservationPersistenceWorker.class);
+
+    private final StringRedisTemplate redisTemplate;
+    private final ReservationJpaRepository jpaRepository;
+    private final ReservationPersistenceProperties properties;
+
+    public ReservationPersistenceWorker(
+            StringRedisTemplate redisTemplate,
+            ReservationJpaRepository jpaRepository,
+            ReservationPersistenceProperties properties
+    ) {
+        this.redisTemplate = redisTemplate;
+        this.jpaRepository = jpaRepository;
+        this.properties = properties;
+    }
+
+    @PostConstruct
+    public void initConsumerGroup() {
+        try {
+            redisTemplate.execute((RedisCallback<Void>) connection -> {
+                connection.xGroupCreate(
+                        bytes(properties.streamKey()),
+                        properties.consumerGroup(),
+                        ReadOffset.from("0"),
+                        true
+                );
+                return null;
+            });
+        } catch (Exception e) {
+            // 이미 존재하면 무시
+        }
+    }
+
+    @Scheduled(fixedDelay = 100)
+    public void scheduledProcess() {
+        if (!properties.workerEnabled()) {
+            return;
+        }
+        reclaimAndProcess(properties.pendingIdleMs());
+        processOnce();
+    }
+
+    /**
+     * 이 consumer group의 pending 메시지 중 idle 시간이 지난 메시지를 다시 소유해 처리한다.
+     */
+    public void reclaimAndProcess(long idleMs) {
+        try {
+            List<ByteRecord> claimed = claimPendingMessages(Math.max(1, idleMs));
+            if (!claimed.isEmpty()) {
+                processClaimedMessages(claimed);
+            }
+        } catch (Exception e) {
+            log.warn("Pending reprocess error: {}", e.getMessage());
+        }
+    }
+
+    public void processOnce() {
+        try {
+            List<MapRecord<String, Object, Object>> messages = redisTemplate.opsForStream().read(
+                    Consumer.from(properties.consumerGroup(), properties.consumerName()),
+                    StreamReadOptions.empty().count(properties.batchSize()).block(Duration.ofMillis(200)),
+                    StreamOffset.create(properties.streamKey(), ReadOffset.lastConsumed())
+            );
+            if (messages != null && !messages.isEmpty()) {
+                processReadGroupMessages(messages);
+            }
+        } catch (Exception e) {
+            log.warn("XREADGROUP error: {}", e.getMessage());
+        }
+    }
+
+    private List<ByteRecord> claimPendingMessages(long idleMs) {
+        return redisTemplate.execute((RedisCallback<List<ByteRecord>>) connection -> {
+            PendingMessages pendingMessages = connection.xPending(
+                    bytes(properties.streamKey()),
+                    Consumer.from(properties.consumerGroup(), properties.consumerName())
+            );
+            if (pendingMessages == null || pendingMessages.isEmpty()) {
+                return List.of();
+            }
+
+            List<RecordId> ids = new ArrayList<>();
+            for (PendingMessage pendingMessage : pendingMessages) {
+                if (pendingMessage.getElapsedTimeSinceLastDelivery().toMillis() >= idleMs) {
+                    ids.add(pendingMessage.getId());
+                }
+            }
+            if (ids.isEmpty()) {
+                return List.of();
+            }
+
+            return connection.xClaim(
+                    bytes(properties.streamKey()),
+                    properties.consumerGroup(),
+                    properties.consumerName(),
+                    Duration.ofMillis(idleMs),
+                    ids.toArray(new RecordId[0])
+            );
+        });
+    }
+
+    private void processReadGroupMessages(List<MapRecord<String, Object, Object>> messages) {
+        for (MapRecord<String, Object, Object> message : messages) {
+            processMessage(
+                    message.getId().toString(),
+                    stringBody(message.getValue().get("reservationId")),
+                    stringBody(message.getValue().get("eventId")),
+                    stringBody(message.getValue().get("userId")),
+                    stringBody(message.getValue().get("seatId")),
+                    stringBody(message.getValue().get("status")),
+                    stringBody(message.getValue().get("reservedAt")),
+                    stringBody(message.getValue().get("idempotencyKey"))
+            );
+        }
+    }
+
+    private void processClaimedMessages(List<ByteRecord> messages) {
+        for (ByteRecord message : messages) {
+            Map<byte[], byte[]> body = message.getValue();
+            processMessage(
+                    message.getId().toString(),
+                    stringBody(valueFor(body, "reservationId")),
+                    stringBody(valueFor(body, "eventId")),
+                    stringBody(valueFor(body, "userId")),
+                    stringBody(valueFor(body, "seatId")),
+                    stringBody(valueFor(body, "status")),
+                    stringBody(valueFor(body, "reservedAt")),
+                    stringBody(valueFor(body, "idempotencyKey"))
+            );
+        }
+    }
+
+    private void processMessage(
+            String messageId,
+            String reservationId,
+            String eventId,
+            String userId,
+            String seatId,
+            String status,
+            String reservedAt,
+            String idempotencyKey
+    ) {
+        try {
+            ReservationEntity entity = new ReservationEntity(
+                    reservationId,
+                    eventId,
+                    userId,
+                    seatId,
+                    status,
+                    Instant.parse(reservedAt),
+                    idempotencyKey,
+                    Instant.now()
+            );
+            jpaRepository.save(entity);
+            log.debug("Saved reservation={} event={} user={} seat={}",
+                    entity.getId(), entity.getEventId(), entity.getUserId(), entity.getSeatId());
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Duplicate reservation skipped: messageId={}", messageId);
+        } catch (Exception e) {
+            log.error("Failed to process message id={}: {}", messageId, e.getMessage());
+        }
+        ack(messageId);
+    }
+
+    private String stringBody(Object value) {
+        return value == null ? null : value.toString();
+    }
+
+    private String stringBody(byte[] value) {
+        return value == null ? null : new String(value, StandardCharsets.UTF_8);
+    }
+
+    private byte[] valueFor(Map<byte[], byte[]> body, String field) {
+        byte[] target = bytes(field);
+        for (Map.Entry<byte[], byte[]> entry : body.entrySet()) {
+            if (java.util.Arrays.equals(entry.getKey(), target)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private byte[] bytes(String value) {
+        return value.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private void ack(String messageId) {
+        try {
+            redisTemplate.opsForStream().acknowledge(
+                    properties.streamKey(),
+                    properties.consumerGroup(),
+                    messageId
+            );
+        } catch (Exception e) {
+            log.warn("XACK failed for messageId={}: {}", messageId, e.getMessage());
+        }
+    }
+}

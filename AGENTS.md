@@ -2,7 +2,7 @@
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read:
 
-- specs/003-idempotency/plan.md
+- specs/004-async-persistence/plan.md
 
 Project documentation language:
 

@@ -1,4 +1,14 @@
 spring:
+  datasource:
+    url: jdbc:tc:mysql:8.0:///ticketing
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  sql:
+    init:
+      mode: never
   data:
     redis:
       host: localhost
@@ -16,3 +26,10 @@ reservation:
   seat-id-prefix: seat-
   idempotency-ttl-seconds: 600
   idempotency-key-max-length: 120
+  persistence:
+    stream-key: reservation-events
+    consumer-group: persistence-workers
+    consumer-name: worker-1
+    batch-size: 10
+    pending-idle-ms: 30000
+    worker-enabled: false
