@@ -79,6 +79,16 @@ admission rate: 20 users/s
 - 중복 예매가 발생하지 않는다.
 - 모든 성공 예매가 DB에 저장된다.
 
+Queue-only smoke 실행:
+
+```bash
+docker compose up -d redis mysql
+QUEUE_ADMISSION_RATE_PER_SECOND=20 ./gradlew bootRun
+PRESET=smoke BASE_URL=http://localhost:8080 k6 run k6-load-test/queue-admission.js
+```
+
+Queue-only smoke는 Reservation API와 MySQL 저장까지 밀어 넣지 않고, 대기열 진입과 상태 polling만 검증한다. 이 단계의 성공 기준은 `POST /queue`가 100명의 사용자를 받아 queue token을 반환하고, `GET /queue/{queueToken}`이 `WAITING`, `ENTERED`, `EXPIRED` 중 하나의 유효한 상태를 계속 반환하는 것이다.
+
 ### Stage 2: Local Baseline
 
 목표:
@@ -149,6 +159,16 @@ random seat selection delay: 5s
 - 중복 예매는 0건이다.
 - DB 저장은 지연될 수 있으나 최종적으로 Redis 성공 이벤트와 일치한다.
 
+Queue-only target 실행:
+
+```bash
+docker compose up -d redis mysql
+QUEUE_ADMISSION_RATE_PER_SECOND=300 ./gradlew bootRun
+PRESET=queue_only_30000 BASE_URL=http://localhost:8080 k6 run k6-load-test/queue-admission.js
+```
+
+30,000 VU queue-only preset은 대기열 계층만 압박한다. 이 테스트는 Redis `waiting:{eventId}`, `queue-token:{token}`, `queue-user-token:{eventId}:{userId}`, `queue-events`, `active:{eventId}:{userId}` 흐름을 관찰하기 위한 것이며, 좌석 선점과 MySQL 저장 성능을 주장하는 근거로 사용하지 않는다.
+
 ## 사용자 흐름
 
 부하 테스트 사용자는 다음 순서로 행동합니다.
@@ -181,6 +201,46 @@ random seat selection delay: 5s
 - worker lag
 - Redis memory usage
 - application CPU and memory usage
+
+Queue-only preset에서 우선 수집할 지표:
+
+- queue entry request count
+- queue status polling request count
+- `WAITING`, `ENTERED`, `EXPIRED` 응답 수
+- active token issued count
+- current waiting count
+- current active count
+- Queue API p50, p95, p99 latency
+- Redis memory usage
+- application CPU and memory usage
+
+로컬 머신 조건 기록 항목:
+
+```text
+CPU:
+Memory:
+OS:
+Java version:
+Docker version:
+Redis image:
+MySQL image:
+Spring profile:
+queue.admission-rate-per-second:
+queue.poll-after-seconds:
+queue.active-ttl-seconds:
+k6 version:
+```
+
+Admission rate 검증 절차:
+
+```text
+1. smoke에서는 admission rate를 20 users/s로 설정한다.
+2. 100명의 사용자를 queue-only preset으로 진입시킨다.
+3. active token 발급 속도가 순간적으로 크게 튀지 않고, 약 5초 안팎에서 전체 사용자가 ENTERED 또는 EXPIRED로 수렴하는지 확인한다.
+4. target에서는 admission rate를 300 users/s로 설정한다.
+5. 30,000명의 사용자를 queue-only preset으로 진입시킨다.
+6. Queue API가 polling 응답을 유지하고, active token 발급이 설정 rate를 기준으로 진행되는지 application log와 Redis 지표로 확인한다.
+```
 
 ## 정합성 검증 쿼리
 

@@ -11,7 +11,7 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
   sql:
     init:
       mode: always

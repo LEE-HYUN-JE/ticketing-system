@@ -126,13 +126,13 @@
 
 **Purpose**: 문서, smoke test 준비, 전체 story 검증을 마무리한다.
 
-- [ ] T042 [P] `k6-load-test/queue-admission.js`에 100 VU smoke preset과 30,000 VU queue-only preset을 가진 부하 테스트 스크립트를 추가한다
-- [ ] T043 [P] `docs/load-test-plan.md`에 100 virtual user smoke test, 30,000 virtual user queue-only test, 로컬 머신 조건 기록 항목, admission rate 20/300 users/s 검증 절차를 추가한다
-- [ ] T044 [P] `docs/architecture.md`에 Redis key model, `queue-user-token:{eventId}:{userId}` reverse index, `queue-events` registry, no-MySQL queue path, scheduler behavior, active admission guard, future reservation boundary를 반영한다
-- [ ] T045 `specs/001-queue-admission/quickstart.md`에 WAITING, ENTERED, EXPIRED 상태별 curl 검증 명령과 기대 응답을 추가한다
-- [ ] T046 `src/test/java/com/example/ticketing/` 테스트를 대상으로 `./gradlew test`를 실행하고 실패를 수정한다
-- [ ] T047 `docker compose up -d redis`를 실행한 뒤 `specs/001-queue-admission/quickstart.md`의 manual API flow를 검증한다
-- [ ] T048 `src/main/java/com/example/ticketing/queue/`의 Redis access path를 검토하여 queue registration, status lookup, scheduler, active admission guard가 Redis `KEYS`와 MySQL을 사용하지 않는지 확인한다
+- [X] T042 [P] `k6-load-test/queue-admission.js`에 100 VU smoke preset과 30,000 VU queue-only preset을 가진 부하 테스트 스크립트를 추가한다
+- [X] T043 [P] `docs/load-test-plan.md`에 100 virtual user smoke test, 30,000 virtual user queue-only test, 로컬 머신 조건 기록 항목, admission rate 20/300 users/s 검증 절차를 추가한다
+- [X] T044 [P] `docs/architecture.md`에 Redis key model, `queue-user-token:{eventId}:{userId}` reverse index, `queue-events` registry, no-MySQL queue path, scheduler behavior, active admission guard, future reservation boundary를 반영한다
+- [X] T045 `specs/001-queue-admission/quickstart.md`에 WAITING, ENTERED, EXPIRED 상태별 curl 검증 명령과 기대 응답을 추가한다
+- [X] T046 `src/test/java/com/example/ticketing/` 테스트를 대상으로 `./gradlew test`를 실행하고 실패를 수정한다
+- [X] T047 `docker compose up -d redis`를 실행한 뒤 `specs/001-queue-admission/quickstart.md`의 manual API flow를 검증한다
+- [X] T048 `src/main/java/com/example/ticketing/queue/`의 Redis access path를 검토하여 queue registration, status lookup, scheduler, active admission guard가 Redis `KEYS`와 MySQL을 사용하지 않는지 확인한다
 
 ---
 
