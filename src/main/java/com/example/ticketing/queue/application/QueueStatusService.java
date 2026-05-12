@@ -1,6 +1,6 @@
 package com.example.ticketing.queue.application;
 
-import com.example.ticketing.queue.api.QueueStatusDtos.QueueStatusResponse;
+import com.example.ticketing.queue.api.dto.QueueStatusResponse;
 import com.example.ticketing.queue.domain.QueueModels.QueuePosition;
 import com.example.ticketing.queue.domain.QueueModels.QueueTokenMapping;
 import com.example.ticketing.queue.domain.QueueStatus;

@@ -1,6 +1,6 @@
 package com.example.ticketing.reservation.application;
 
-import com.example.ticketing.reservation.api.ReservationDtos.ReservationResponse;
+import com.example.ticketing.reservation.api.dto.ReservationResponse;
 import com.example.ticketing.reservation.domain.ReservationStatus;
 import com.example.ticketing.reservation.infrastructure.RedisReservationRepository;
 import org.springframework.stereotype.Service;

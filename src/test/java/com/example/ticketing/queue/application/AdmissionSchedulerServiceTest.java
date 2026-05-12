@@ -2,7 +2,7 @@ package com.example.ticketing.queue.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.example.ticketing.queue.api.QueueEntryDtos.QueueEntryResponse;
+import com.example.ticketing.queue.api.dto.QueueEntryResponse;
 import com.example.ticketing.queue.infrastructure.QueueRedisKeys;
 import com.example.ticketing.support.RedisIntegrationTestSupport;
 import java.util.List;

@@ -3,8 +3,8 @@ package com.example.ticketing.queue.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.example.ticketing.queue.api.QueueEntryDtos.QueueEntryResponse;
-import com.example.ticketing.queue.api.QueueStatusDtos.QueueStatusResponse;
+import com.example.ticketing.queue.api.dto.QueueEntryResponse;
+import com.example.ticketing.queue.api.dto.QueueStatusResponse;
 import com.example.ticketing.queue.domain.QueueStatus;
 import com.example.ticketing.queue.infrastructure.QueueRedisKeys;
 import com.example.ticketing.support.RedisIntegrationTestSupport;
