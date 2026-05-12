@@ -54,7 +54,10 @@ src/main/java/com/example/ticketing/reservation
 │   ├── SeatIdValidator.java          // 좌석 ID 정책 검증
 │   └── SeatReservationService.java   // 좌석 선점 유스케이스
 ├── domain
-│   ├── ReservationModels.java        // 예매 도메인 record 모음
+│   ├── ReservationClaim.java         // 좌석 선점 요청 도메인 값
+│   ├── ReservationEvent.java         // Redis Stream에 발행되는 예매 이벤트
+│   ├── ReservationLookupResult.java  // 사용자 예매 조회 결과
+│   ├── SeatClaimResult.java          // Lua script 좌석 선점 결과
 │   └── ReservationStatus.java        // 예매 결과 상태 enum
 ├── infrastructure
 │   ├── RedisReservationRepository.java // Lua 기반 좌석 선점 Redis 접근
@@ -90,9 +93,10 @@ src/main/java/com/example/ticketing/reservation
 
 | 클래스 | 책임 |
 |--------|------|
-| `ReservationModels.SeatClaimResult` | Redis Lua script가 반환한 좌석 선점 결과를 표현합니다. |
-| `ReservationModels.ReservationLookupResult` | 사용자 예매 조회 결과를 표현합니다. |
-| `ReservationModels.ReservationEvent` | MySQL 비동기 저장을 위해 Redis Stream에 발행할 이벤트입니다. |
+| `SeatClaimResult` | Redis Lua script가 반환한 좌석 선점 결과를 표현합니다. |
+| `ReservationLookupResult` | 사용자 예매 조회 결과를 표현합니다. |
+| `ReservationEvent` | MySQL 비동기 저장을 위해 Redis Stream에 발행할 이벤트입니다. |
+| `ReservationClaim` | 좌석 선점 요청 자체를 표현하는 도메인 값입니다. 현재 유스케이스의 입력을 명확히 표현하기 위해 독립 record로 둡니다. |
 | `ReservationStatus` | 예매 결과 상태 enum입니다. `RESERVED`, `ALREADY_RESERVED`, `SEAT_ALREADY_TAKEN`, `NOT_ACTIVE`, `INVALID_SEAT`, `NOT_RESERVED` 등을 표현합니다. |
 
 ### infrastructure

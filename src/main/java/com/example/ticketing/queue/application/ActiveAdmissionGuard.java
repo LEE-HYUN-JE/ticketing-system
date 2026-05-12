@@ -13,6 +13,10 @@ public class ActiveAdmissionGuard {
         this.queueRepository = queueRepository;
     }
 
+    /**
+     * Reservation 계층으로 넘어가기 전 사용자가 active admission을 보유했는지 강제한다.
+     * active token이 없으면 좌석 선점 hot path로 진입시키지 않아 예매 API의 유입량을 제한한다.
+     */
     public void requireActiveAdmission(String eventId, String userId) {
         validateRequired("eventId", eventId);
         validateRequired("userId", userId);
@@ -22,6 +26,10 @@ public class ActiveAdmissionGuard {
         }
     }
 
+    /**
+     * Redis active TTL key를 기준으로 예매 가능 상태인지 확인한다.
+     * TTL이 만료된 사용자는 대기열에서 입장했더라도 다시 좌석 선점을 시도할 수 없다.
+     */
     public boolean hasActiveAdmission(String eventId, String userId) {
         validateRequired("eventId", eventId);
         validateRequired("userId", userId);
@@ -34,4 +42,3 @@ public class ActiveAdmissionGuard {
         }
     }
 }
-

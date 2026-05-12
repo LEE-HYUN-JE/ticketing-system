@@ -55,7 +55,10 @@ src/main/java/com/example/ticketing/queue
 │   ├── QueueProperties.java      // queue.* 설정 바인딩
 │   └── QueueStatusService.java   // token 기반 대기 상태 조회 유스케이스
 ├── domain
-│   ├── QueueModels.java          // queue 도메인 record 모음
+│   ├── ActiveAdmission.java      // active admission 도메인 값
+│   ├── QueueEntry.java           // 대기열 진입 도메인 값
+│   ├── QueuePosition.java        // waiting 순번과 전체 대기 수
+│   ├── QueueTokenMapping.java    // queue token -> event/user mapping
 │   └── QueueStatus.java          // WAITING / ENTERED / EXPIRED 상태 enum
 └── infrastructure
     ├── QueueRedisKeys.java       // Redis key 네이밍 규칙
@@ -90,10 +93,10 @@ src/main/java/com/example/ticketing/queue
 
 | 클래스 | 책임 |
 |--------|------|
-| `QueueModels.QueueEntry` | 대기열 진입 도메인 데이터 표현입니다. |
-| `QueueModels.QueueTokenMapping` | token이 어떤 `eventId/userId`에 속하는지 표현합니다. |
-| `QueueModels.ActiveAdmission` | active admission의 event, user, 입장 시각, 만료 시각을 표현합니다. |
-| `QueueModels.QueuePosition` | waiting ZSET 기준 현재 순번과 전체 대기 수를 표현합니다. |
+| `QueueEntry` | 대기열 진입 도메인 데이터 표현입니다. |
+| `QueueTokenMapping` | token이 어떤 `eventId/userId`에 속하는지 표현합니다. |
+| `ActiveAdmission` | active admission의 event, user, 입장 시각, 만료 시각을 표현합니다. |
+| `QueuePosition` | waiting ZSET 기준 현재 순번과 전체 대기 수를 표현합니다. |
 | `QueueStatus` | queue 상태 enum입니다. `WAITING`, `ENTERED`, `EXPIRED`를 가집니다. |
 
 ### infrastructure

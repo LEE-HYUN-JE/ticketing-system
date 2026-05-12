@@ -37,6 +37,10 @@ public class AdmissionSchedulerService {
         this.clock = clock;
     }
 
+    /**
+     * 특정 event의 waiting 사용자 중 설정된 admission rate만큼 active 상태로 전환한다.
+     * 한 tick은 트래픽 밸브 역할을 하며, Reservation API로 흘러가는 사용자 수를 초 단위로 제한한다.
+     */
     public List<String> admitOneTick(String eventId) {
         List<String> admitted = admissionRepository.admitOldest(
                 eventId,
@@ -48,6 +52,10 @@ public class AdmissionSchedulerService {
         return admitted;
     }
 
+    /**
+     * Redis에 등록된 모든 event 대기열을 순회하며 admission tick을 수행한다.
+     * Redis KEYS 스캔 대신 queue-events registry를 사용해 로컬 부하 테스트에서도 예측 가능한 접근 패턴을 유지한다.
+     */
     public long admitAllRegisteredEvents() {
         return queueRepository.findQueueEvents()
                 .stream()

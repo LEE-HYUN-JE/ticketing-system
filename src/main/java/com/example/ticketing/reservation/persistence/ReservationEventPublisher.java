@@ -1,6 +1,6 @@
 package com.example.ticketing.reservation.persistence;
 
-import com.example.ticketing.reservation.domain.ReservationModels.ReservationEvent;
+import com.example.ticketing.reservation.domain.ReservationEvent;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -22,6 +22,11 @@ public class ReservationEventPublisher {
         this.properties = properties;
     }
 
+    /**
+     * 좌석 선점 성공 이벤트를 Redis Stream에 추가한다.
+     * 발행 실패를 API 예외로 전파하지 않는 이유는 좌석 선점의 실시간 정합성은 이미 Redis에서 결정됐고,
+     * 이 경계는 MySQL 최종 저장을 위한 후속 처리 큐이기 때문이다.
+     */
     public void publish(ReservationEvent event) {
         try {
             Map<String, String> body = new HashMap<>();

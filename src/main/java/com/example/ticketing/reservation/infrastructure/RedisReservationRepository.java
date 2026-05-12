@@ -1,8 +1,8 @@
 package com.example.ticketing.reservation.infrastructure;
 
 import com.example.ticketing.queue.infrastructure.QueueRedisKeys;
-import com.example.ticketing.reservation.domain.ReservationModels.ReservationLookupResult;
-import com.example.ticketing.reservation.domain.ReservationModels.SeatClaimResult;
+import com.example.ticketing.reservation.domain.ReservationLookupResult;
+import com.example.ticketing.reservation.domain.SeatClaimResult;
 import com.example.ticketing.reservation.domain.ReservationStatus;
 import java.time.Instant;
 import java.util.List;
@@ -39,6 +39,10 @@ public class RedisReservationRepository {
         this.claimSeatScript.setResultType(List.class);
     }
 
+    /**
+     * Redis Lua script로 좌석 선점의 모든 비즈니스 조건을 원자적으로 평가한다.
+     * Java 레벨에서 여러 Redis 명령으로 쪼개지 않기 때문에 동시 요청에서도 좌석/사용자/idempotency 상태가 함께 갱신된다.
+     */
     @SuppressWarnings("unchecked")
     public SeatClaimResult claimSeat(
             String eventId,
@@ -72,6 +76,10 @@ public class RedisReservationRepository {
         return new SeatClaimResult(status, resultSeatId, message);
     }
 
+    /**
+     * Redis에 저장된 사용자별 예매 hash를 조회한다.
+     * Redis가 실시간 조회 저장소이고 MySQL은 비동기 최종 저장소이므로 조회 API는 이 값을 우선 사용한다.
+     */
     public Optional<ReservationLookupResult> findUserReservation(String eventId, String userId) {
         Map<Object, Object> values = redisTemplate.opsForHash().entries(reservationKeys.reservationUser(eventId, userId));
         if (values.isEmpty()) {

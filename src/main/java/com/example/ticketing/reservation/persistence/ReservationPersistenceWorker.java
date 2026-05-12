@@ -71,6 +71,10 @@ public class ReservationPersistenceWorker {
         }
     }
 
+    /**
+     * worker가 활성화된 인스턴스에서 Redis Stream을 주기적으로 소비한다.
+     * 먼저 오래된 pending 메시지를 회수하고, 그 다음 새 메시지를 읽어 장애 후 재처리와 정상 소비를 함께 진행한다.
+     */
     @Scheduled(fixedDelay = 100)
     public void scheduledProcess() {
         if (!properties.workerEnabled()) {
@@ -94,6 +98,10 @@ public class ReservationPersistenceWorker {
         }
     }
 
+    /**
+     * consumer group에 아직 전달되지 않은 새 예약 이벤트를 한 batch 읽어 MySQL에 저장한다.
+     * 정상 처리된 메시지는 XACK하고, DB unique constraint 중복은 이미 처리된 이벤트로 보고 skip한다.
+     */
     public void processOnce() {
         try {
             // lastConsumed(">")는 이 consumer group에 아직 전달되지 않은 새 메시지만 읽는다.

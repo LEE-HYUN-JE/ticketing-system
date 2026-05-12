@@ -23,6 +23,10 @@ public class RedisAdmissionRepository {
         this.admitScript.setResultType(List.class);
     }
 
+    /**
+     * waiting ZSET에서 가장 오래 기다린 사용자들을 active admission으로 이동시킨다.
+     * Lua script가 ZREM 성공 여부를 확인하므로 여러 scheduler가 겹쳐도 한 사용자가 중복 입장하지 않는다.
+     */
     @SuppressWarnings("unchecked")
     public List<String> admitOldest(String eventId, int limit, int activeTtlSeconds, Instant now) {
         if (limit <= 0) {

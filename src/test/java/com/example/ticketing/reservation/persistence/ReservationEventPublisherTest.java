@@ -3,7 +3,7 @@ package com.example.ticketing.reservation.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.example.ticketing.reservation.domain.ReservationModels.ReservationEvent;
+import com.example.ticketing.reservation.domain.ReservationEvent;
 import com.example.ticketing.support.RedisIntegrationTestSupport;
 import java.time.Instant;
 import java.util.List;

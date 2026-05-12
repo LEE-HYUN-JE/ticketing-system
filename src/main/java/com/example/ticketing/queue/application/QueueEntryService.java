@@ -22,6 +22,10 @@ public class QueueEntryService {
         this.properties = properties;
     }
 
+    /**
+     * 사용자를 Redis 대기열에 등록하고 polling에 사용할 queue token을 반환한다.
+     * 동일 event/user가 반복 진입하면 Lua script가 기존 token으로 수렴시키므로 사용자는 하나의 대기 위치만 가진다.
+     */
     public QueueEntryResponse enter(String eventId, String userId) {
         validateRequired("eventId", eventId);
         validateRequired("userId", userId);
@@ -51,6 +55,10 @@ public class QueueEntryService {
         );
     }
 
+    /**
+     * waiting ZSET score는 요청 시각에 작은 sequence를 더해 만든다.
+     * 같은 millisecond에 많은 요청이 들어와도 score 충돌을 줄여 오래 기다린 사용자 순서를 안정적으로 유지한다.
+     */
     private double waitingScore(Instant requestedAt) {
         long sequence = scoreSequence.getAndIncrement() % 1_000_000L;
         return requestedAt.toEpochMilli() + (sequence / 1_000_000.0d);

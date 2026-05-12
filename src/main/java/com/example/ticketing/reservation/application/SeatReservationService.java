@@ -1,8 +1,8 @@
 package com.example.ticketing.reservation.application;
 
 import com.example.ticketing.reservation.api.dto.ReservationResponse;
-import com.example.ticketing.reservation.domain.ReservationModels.ReservationEvent;
-import com.example.ticketing.reservation.domain.ReservationModels.SeatClaimResult;
+import com.example.ticketing.reservation.domain.ReservationEvent;
+import com.example.ticketing.reservation.domain.SeatClaimResult;
 import com.example.ticketing.reservation.domain.ReservationStatus;
 import com.example.ticketing.reservation.infrastructure.RedisReservationRepository;
 import com.example.ticketing.reservation.persistence.ReservationEventPublisher;
@@ -46,6 +46,11 @@ public class SeatReservationService {
         this.clock = clock;
     }
 
+    /**
+     * active admission을 가진 사용자에게 좌석 선점을 시도한다.
+     * Redis Lua script가 active 여부, idempotency replay, 사용자 중복 예매, 좌석 중복 점유를 한 번에 판단하며,
+     * 성공한 경우에만 Redis Stream에 MySQL 비동기 저장 이벤트를 발행한다.
+     */
     public ReservationResponse claimSeat(String eventId, String userId, String seatId, String idempotencyKey) {
         validateRequired("eventId", eventId);
         validateRequired("userId", userId);

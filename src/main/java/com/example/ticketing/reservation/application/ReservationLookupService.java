@@ -15,6 +15,10 @@ public class ReservationLookupService {
         this.reservationRepository = reservationRepository;
     }
 
+    /**
+     * event/user 기준으로 Redis에 기록된 예매 결과를 조회한다.
+     * 이 API는 MySQL 영속화 완료 여부와 무관하게 Redis의 실시간 선점 결과를 사용자에게 보여준다.
+     */
     public ReservationResponse getReservation(String eventId, String userId) {
         validateRequired("eventId", eventId);
         validateRequired("userId", userId);
@@ -29,4 +33,3 @@ public class ReservationLookupService {
         }
     }
 }
-

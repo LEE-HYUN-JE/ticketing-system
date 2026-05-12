@@ -1,8 +1,8 @@
 package com.example.ticketing.queue.application;
 
 import com.example.ticketing.queue.api.dto.QueueStatusResponse;
-import com.example.ticketing.queue.domain.QueueModels.QueuePosition;
-import com.example.ticketing.queue.domain.QueueModels.QueueTokenMapping;
+import com.example.ticketing.queue.domain.QueuePosition;
+import com.example.ticketing.queue.domain.QueueTokenMapping;
 import com.example.ticketing.queue.domain.QueueStatus;
 import com.example.ticketing.queue.infrastructure.RedisQueueRepository;
 import java.util.Optional;
@@ -21,6 +21,10 @@ public class QueueStatusService {
         this.properties = properties;
     }
 
+    /**
+     * queue token을 event/user로 해석한 뒤 현재 대기 상태를 계산한다.
+     * waiting ZSET에 있으면 순번을, waiting에서 빠졌고 active TTL이 남아 있으면 ENTERED를, 둘 다 아니면 EXPIRED를 반환한다.
+     */
     public QueueStatusResponse getStatus(String eventId, String queueToken) {
         validateRequired("eventId", eventId);
         validateQueueToken(queueToken);
