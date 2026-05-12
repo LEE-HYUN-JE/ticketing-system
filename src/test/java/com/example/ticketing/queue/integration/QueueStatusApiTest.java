@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.ticketing.queue.api.QueueEntryDtos.QueueEntryResponse;
+import com.example.ticketing.queue.api.dto.QueueEntryResponse;
 import com.example.ticketing.queue.application.QueueEntryService;
 import com.example.ticketing.queue.infrastructure.QueueRedisKeys;
 import com.example.ticketing.support.RedisIntegrationTestSupport;

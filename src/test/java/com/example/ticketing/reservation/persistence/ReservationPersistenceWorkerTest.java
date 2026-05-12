@@ -16,7 +16,12 @@ import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.connection.stream.StreamReadOptions;
 import org.springframework.test.context.TestPropertySource;
 
-@TestPropertySource(properties = "reservation.persistence.worker-enabled=true")
+@TestPropertySource(properties = {
+        "reservation.persistence.stream-key=reservation-worker-test-events",
+        "reservation.persistence.consumer-group=reservation-worker-test-group",
+        "reservation.persistence.consumer-name=reservation-worker-test-consumer",
+        "reservation.persistence.worker-enabled=false"
+})
 class ReservationPersistenceWorkerTest extends RedisIntegrationTestSupport {
 
     @Autowired
@@ -31,7 +36,7 @@ class ReservationPersistenceWorkerTest extends RedisIntegrationTestSupport {
     @BeforeEach
     void setUp() {
         jpaRepository.deleteAll();
-        worker.initConsumerGroup();
+        worker.ensureConsumerGroup();
     }
 
     @Test
@@ -77,7 +82,7 @@ class ReservationPersistenceWorkerTest extends RedisIntegrationTestSupport {
     }
 
     @Test
-    void pendingMessagesAreReprocessedOnRestart() {
+    void pendingMessagesAreReprocessedOnRestart() throws InterruptedException {
         String reservationId = UUID.randomUUID().toString();
         Map<String, String> body = new HashMap<>();
         body.put("reservationId", reservationId);
@@ -95,6 +100,8 @@ class ReservationPersistenceWorkerTest extends RedisIntegrationTestSupport {
                 StreamReadOptions.empty().count(1),
                 StreamOffset.create(properties.streamKey(), ReadOffset.lastConsumed())
         );
+
+        Thread.sleep(5);
 
         // 재시작 시 pending 메시지를 재처리 (offset "0"으로 읽기)
         worker.reclaimAndProcess(0);

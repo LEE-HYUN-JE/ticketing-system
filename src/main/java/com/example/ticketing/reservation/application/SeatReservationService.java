@@ -1,6 +1,6 @@
 package com.example.ticketing.reservation.application;
 
-import com.example.ticketing.reservation.api.ReservationDtos.ReservationResponse;
+import com.example.ticketing.reservation.api.dto.ReservationResponse;
 import com.example.ticketing.reservation.domain.ReservationModels.ReservationEvent;
 import com.example.ticketing.reservation.domain.ReservationModels.SeatClaimResult;
 import com.example.ticketing.reservation.domain.ReservationStatus;
@@ -69,6 +69,8 @@ public class SeatReservationService {
                 properties.idempotencyTtlSeconds()
         );
         if (result.status() == ReservationStatus.RESERVED) {
+            // API 응답은 Redis 선점 성공을 기준으로 즉시 반환한다.
+            // MySQL 저장은 Redis Stream worker가 나중에 처리하므로 hot path가 DB connection에 묶이지 않는다.
             eventPublisher.publish(new ReservationEvent(
                     UUID.randomUUID().toString(),
                     eventId, userId, seatId,

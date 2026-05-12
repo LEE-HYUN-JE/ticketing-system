@@ -45,7 +45,9 @@ GET /api/events/{eventId}/reservations/users/{userId}
 src/main/java/com/example/ticketing/reservation
 ├── api
 │   ├── ReservationController.java // 예매/조회 HTTP API 진입점
-│   └── ReservationDtos.java       // 예매 요청/응답 DTO
+│   └── dto
+│       ├── ReservationRequest.java  // 예매 요청 DTO
+│       └── ReservationResponse.java // 예매 응답 DTO
 ├── application
 │   ├── ReservationLookupService.java // 사용자 예매 조회 유스케이스
 │   ├── ReservationProperties.java    // reservation.* 설정 바인딩
@@ -72,8 +74,8 @@ src/main/java/com/example/ticketing/reservation
 | 클래스 | 책임 |
 |--------|------|
 | `ReservationController` | `/api/events/{eventId}/reservations` 하위 API를 노출합니다. `POST`는 좌석 선점, `GET /users/{userId}`는 사용자 예매 조회입니다. |
-| `ReservationDtos.ReservationRequest` | 좌석 선점 요청 body입니다. `userId`, `seatId`를 받습니다. |
-| `ReservationDtos.ReservationResponse` | 예매 결과 응답입니다. `status`, `seatId`, `message`를 담습니다. |
+| `dto.ReservationRequest` | 좌석 선점 요청 body입니다. `userId`, `seatId`를 받습니다. |
+| `dto.ReservationResponse` | 예매 결과 응답입니다. `status`, `seatId`, `message`를 담습니다. |
 
 ### application
 
@@ -114,7 +116,7 @@ src/main/java/com/example/ticketing/reservation
 
 ```text
 seat:{eventId}:{seatId}                         // 좌석 -> userId
-reservation-user:{eventId}:{userId}             // 사용자 -> seatId/status/reservedAt hash
+reservation:user:{eventId}:{userId}             // 사용자 -> seatId/status/reservedAt hash
 idempotency:{eventId}:{userId}:{idempotencyKey} // 중복 요청 결과 replay hash
 reservation-events                              // MySQL 비동기 저장용 Redis Stream
 ```

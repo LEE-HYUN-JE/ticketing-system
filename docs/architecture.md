@@ -18,33 +18,48 @@ flowchart TD
 
     subgraph ReservationLayer["Reservation Layer"]
         ReservationApi["Reservation API"]
-        Idempotency["Idempotency Guard"]
-        SeatLua[("Redis Lua Script\nseat claim")]
+        ActiveGuard["ActiveAdmissionGuard"]
+        SeatLua[("Redis Lua Script\nactive / idempotency / seat claim")]
     end
 
     subgraph PersistenceLayer["Persistence Layer"]
-        EventQueue["Reservation Event Queue"]
-        Worker["Persistence Worker"]
-        MySQL[("MySQL")]
+        EventQueue[("Redis Stream\nreservation-events")]
+        Worker["ReservationPersistenceWorker"]
+        MySQL[("MySQL\nreservations")]
     end
 
-    User -->|"1. 예매 진입"| QueueApi
-    QueueApi -->|"2. ZADD waiting queue"| RedisQueue
-    User -.->|"3. 대기 상태 polling"| QueueApi
-    QueueApi -.->|"4. ZRANK / active 확인"| RedisQueue
-    Scheduler -->|"5. admission rate 기준 ZPOPMIN"| RedisQueue
-    Scheduler -->|"6. TTL 있는 active token 발급"| RedisQueue
-    User -->|"7. active token으로 좌석 예매"| ReservationApi
-    ReservationApi -->|"8. active token 검증"| RedisQueue
-    ReservationApi --> Idempotency
-    Idempotency -->|"9. SETNX idempotency key"| RedisQueue
-    ReservationApi -->|"10. 원자적 좌석 선점"| SeatLua
-    SeatLua -->|"11. 성공 이벤트"| EventQueue
-    EventQueue --> Worker
-    Worker -->|"12. reservation 저장"| MySQL
+    User -->|"1. POST /queue<br/>대기열 진입 요청"| QueueApi
+    QueueApi -->|"2. register_queue_entry.lua<br/>token / waiting ZSET 원자 등록"| RedisQueue
+    QueueApi -->|"3. 응답: queueToken, WAITING, pollAfterSeconds"| User
+    User -.->|"4. GET /queue/{queueToken}<br/>polling"| QueueApi
+    QueueApi -.->|"5. ZRANK waiting 또는 active TTL 조회"| RedisQueue
+    QueueApi -.->|"6-A. 응답: WAITING, rank, totalWaiting"| User
+    QueueApi -.->|"6-B. 응답: ENTERED, activeExpiresInSeconds"| User
+    Scheduler -->|"7. admit_waiting_users.lua<br/>초당 N명 입장 처리"| RedisQueue
+    Scheduler -->|"8. active:{eventId}:{userId}<br/>TTL key 발급"| RedisQueue
+    User -->|"9. POST /reservations<br/>Idempotency-Key 포함"| ReservationApi
+    ReservationApi -->|"10. active TTL 확인"| ActiveGuard
+    ActiveGuard -->|"11. GET active key"| RedisQueue
+    ReservationApi -->|"12. claim_seat.lua<br/>active / idempotency / seat 원자 처리"| SeatLua
+    SeatLua -->|"13-A. 응답: RESERVED, seatId"| ReservationApi
+    SeatLua -->|"13-B. 응답: NOT_ACTIVE / ALREADY_RESERVED / SEAT_ALREADY_TAKEN"| ReservationApi
+    ReservationApi -->|"14. 성공 이벤트 XADD"| EventQueue
+    ReservationApi -->|"15. API 응답 반환<br/>DB 저장 완료는 기다리지 않음"| User
+    EventQueue -->|"16. XREADGROUP"| Worker
+    Worker -->|"17. INSERT reservations<br/>unique constraint로 중복 방어"| MySQL
+    Worker -->|"18. XACK"| EventQueue
 ```
 
 ## 핵심 설계
+
+전체 코드는 큰 틀에서 `api -> application -> infrastructure/persistence` 흐름을 따릅니다.
+
+- `api`: HTTP 요청/응답 DTO와 controller를 둡니다.
+- `application`: 유스케이스를 조율합니다. 입력 검증, repository 호출 순서, 응답 조립이 여기에 있습니다.
+- `infrastructure`: Redis 자료구조와 Lua script 호출을 담당합니다.
+- `persistence`: MySQL 엔티티와 Redis Stream worker처럼 최종 영속화와 관련된 코드를 둡니다.
+
+이 프로젝트의 핵심 판단은 “동시성 판단은 Redis에서 빠르게 끝내고, MySQL은 성공 결과의 최종 저장소로만 사용한다”입니다.
 
 ### 1. 대기열 입장
 
@@ -158,17 +173,18 @@ type: Hash
 fields: seatId, status, reservedAt
 
 idempotency:{eventId}:{userId}:{key}
-type: String
-value: processing | succeeded | failed
+type: Hash
+fields: status, seatId, message
 ttl: configurable
 ```
 
-현재 `002-seat-reservation` 기능은 full `Idempotency-Key` 처리를 후속 기능으로 남겨두고, 먼저 `reservation:user:{eventId}:{userId}`로 동일 사용자의 다중 좌석 선점을 막는다. 좌석 선점은 `claim_seat.lua`에서 다음 조건을 한 번에 검사한다.
+현재 구현은 `reservation:user:{eventId}:{userId}`로 동일 사용자의 다중 좌석 선점을 막고, `idempotency:{eventId}:{userId}:{key}`에 최초 요청 결과를 저장해 같은 key 재시도는 같은 응답을 반환한다. 좌석 선점은 `claim_seat.lua`에서 다음 조건을 한 번에 검사한다.
 
 1. `active:{eventId}:{userId}` 존재 여부
-2. 기존 `reservation:user:{eventId}:{userId}` 존재 여부
-3. 기존 `seat:{eventId}:{seatId}` 소유자 존재 여부
-4. 성공 시 seat key와 user reservation hash 기록
+2. 기존 `idempotency:{eventId}:{userId}:{key}` replay 가능 여부
+3. 기존 `reservation:user:{eventId}:{userId}` 존재 여부
+4. 기존 `seat:{eventId}:{seatId}` 소유자 존재 여부
+5. 성공 시 seat key, user reservation hash, idempotency hash 기록
 
 이 경로는 MySQL을 호출하지 않고 Redis `KEYS` 명령을 사용하지 않는다.
 
@@ -176,14 +192,14 @@ ttl: configurable
 
 Redis에서 좌석 선점이 성공하면 API는 성공 응답을 빠르게 반환하고, 예매 성공 이벤트를 비동기 저장 계층으로 전달합니다.
 
-초기 구현에서는 Redis Stream 또는 내부 queue를 사용할 수 있습니다. 포트폴리오 관점에서는 Redis Stream을 우선 고려합니다.
+현재 구현은 Redis Stream을 사용합니다. 좌석 선점이 성공하면 `ReservationEventPublisher`가 `reservation-events` stream에 이벤트를 추가하고, `ReservationPersistenceWorker`가 consumer group으로 이벤트를 읽어 MySQL에 저장합니다.
 
 ```text
-reservation-events:{eventId}
+reservation-events
 type: Redis Stream
 ```
 
-Persistence Worker는 MySQL이 감당 가능한 속도로 이벤트를 소비하고 저장합니다.
+Persistence Worker는 MySQL이 감당 가능한 속도로 이벤트를 소비하고 저장합니다. 처리 중 worker가 중단되면 메시지는 pending 상태로 남고, idle 시간이 지난 pending 메시지는 다시 claim해서 재처리합니다. Redis Stream은 중복 전달 가능성을 완전히 없애는 장치가 아니므로 MySQL의 `event_id/user_id`, `event_id/seat_id` unique constraint가 최종 중복 방어선입니다.
 
 DB에 저장할 주요 데이터:
 
@@ -280,16 +296,20 @@ Content-Type: application/json
 
 로컬 개발 환경은 Docker Compose로 재현 가능해야 합니다.
 
-예상 구성:
+현재 로컬 구성:
 
 ```text
-application: Spring Boot
+queue-was-1..3: Queue API 역할의 Spring Boot 인스턴스
+reservation-was-1..2: Reservation API 역할의 Spring Boot 인스턴스
+queue-scheduler: admission 전환용 Spring Boot 인스턴스
+reservation-worker: Redis Stream -> MySQL 저장 worker
+nginx: Queue/Reservation API 요청 분산
 redis: Redis
 mysql: MySQL
-load-generator: k6 or local binary
+k6: 부하 테스트 도구
 ```
 
-초기에는 단일 애플리케이션 인스턴스로 시작하고, 병목이 확인되면 Queue API, Reservation API, Worker를 분리할 수 있도록 패키지 구조를 유지합니다.
+하나의 Spring Boot 코드베이스를 여러 역할로 띄우고, profile/env 설정으로 scheduler와 worker 활성 여부를 나눕니다. 상태는 WAS 메모리가 아니라 Redis/MySQL에 있으므로 Queue API 3대, Reservation API 1~2대처럼 로컬에서도 다중 WAS 형태를 재현할 수 있습니다.
 
 ## 확장 방향
 

@@ -42,8 +42,10 @@ AdmissionScheduler 매 1초
 src/main/java/com/example/ticketing/queue
 ├── api
 │   ├── QueueController.java      // Queue HTTP API 진입점
-│   ├── QueueEntryDtos.java       // 대기열 진입 요청/응답 DTO
-│   └── QueueStatusDtos.java      // 대기열 상태 조회 응답 DTO
+│   └── dto
+│       ├── QueueEntryRequest.java  // 대기열 진입 요청 DTO
+│       ├── QueueEntryResponse.java // 대기열 진입 응답 DTO
+│       └── QueueStatusResponse.java // 대기열 상태 조회 응답 DTO
 ├── application
 │   ├── ActiveAdmissionGuard.java // active token 검증 가드
 │   ├── AdmissionScheduler.java   // 1초 주기 입장 스케줄러 트리거
@@ -68,9 +70,9 @@ src/main/java/com/example/ticketing/queue
 | 클래스 | 책임 |
 |--------|------|
 | `QueueController` | `/api/events/{eventId}/queue` 하위 HTTP API를 노출합니다. `POST`는 대기열 진입, `GET /{queueToken}`은 상태 조회로 위임합니다. |
-| `QueueEntryDtos.QueueEntryRequest` | 대기열 진입 요청 body입니다. 현재는 `userId`만 받습니다. |
-| `QueueEntryDtos.QueueEntryResponse` | 대기열 진입 응답입니다. hot path 최적화를 위해 `POST /queue`에서는 `rank`, `totalWaiting`을 `null`로 반환하고 token 중심으로 응답합니다. |
-| `QueueStatusDtos.QueueStatusResponse` | 상태 조회 응답입니다. `WAITING`이면 순번과 전체 대기 수, `ENTERED`이면 active TTL, `EXPIRED`이면 빈 상태 정보를 반환합니다. |
+| `dto.QueueEntryRequest` | 대기열 진입 요청 body입니다. 현재는 `userId`만 받습니다. |
+| `dto.QueueEntryResponse` | 대기열 진입 응답입니다. hot path 최적화를 위해 `POST /queue`에서는 `rank`, `totalWaiting`을 `null`로 반환하고 token 중심으로 응답합니다. |
+| `dto.QueueStatusResponse` | 상태 조회 응답입니다. `WAITING`이면 순번과 전체 대기 수, `ENTERED`이면 active TTL, `EXPIRED`이면 빈 상태 정보를 반환합니다. |
 
 ### application
 

@@ -48,6 +48,14 @@ public class ReservationPersistenceWorker {
         if (!properties.workerEnabled()) {
             return;
         }
+        ensureConsumerGroup();
+    }
+
+    /**
+     * Redis Stream consumer group은 메시지 소비 전 한 번 생성되어야 한다.
+     * 운영에서는 worker 활성화 시점에, 테스트에서는 스케줄러를 끈 상태에서 명시적으로 호출한다.
+     */
+    public void ensureConsumerGroup() {
         try {
             redisTemplate.execute((RedisCallback<Void>) connection -> {
                 connection.xGroupCreate(
@@ -88,6 +96,8 @@ public class ReservationPersistenceWorker {
 
     public void processOnce() {
         try {
+            // lastConsumed(">")는 이 consumer group에 아직 전달되지 않은 새 메시지만 읽는다.
+            // 장애로 pending에 남은 메시지는 scheduledProcess의 reclaim 단계에서 별도로 회수한다.
             List<MapRecord<String, Object, Object>> messages = redisTemplate.opsForStream().read(
                     Consumer.from(properties.consumerGroup(), properties.consumerName()),
                     StreamReadOptions.empty().count(properties.batchSize()).block(Duration.ofMillis(200)),
@@ -187,6 +197,7 @@ public class ReservationPersistenceWorker {
             log.debug("Saved reservation={} event={} user={} seat={}",
                     entity.getId(), entity.getEventId(), entity.getUserId(), entity.getSeatId());
         } catch (DataIntegrityViolationException e) {
+            // Redis Stream은 at-least-once에 가깝게 동작한다. 재전달 중복은 MySQL unique constraint가 최종 방어선이다.
             log.warn("Duplicate reservation skipped: messageId={}", messageId);
         } catch (Exception e) {
             log.error("Failed to process message id={}: {}", messageId, e.getMessage());

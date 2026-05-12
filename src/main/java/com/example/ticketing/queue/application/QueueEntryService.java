@@ -1,6 +1,6 @@
 package com.example.ticketing.queue.application;
 
-import com.example.ticketing.queue.api.QueueEntryDtos.QueueEntryResponse;
+import com.example.ticketing.queue.api.dto.QueueEntryResponse;
 import com.example.ticketing.queue.domain.QueueStatus;
 import com.example.ticketing.queue.infrastructure.RedisQueueRepository;
 import java.time.Duration;

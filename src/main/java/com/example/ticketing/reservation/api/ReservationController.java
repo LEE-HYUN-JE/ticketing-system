@@ -1,7 +1,7 @@
 package com.example.ticketing.reservation.api;
 
-import com.example.ticketing.reservation.api.ReservationDtos.ReservationRequest;
-import com.example.ticketing.reservation.api.ReservationDtos.ReservationResponse;
+import com.example.ticketing.reservation.api.dto.ReservationRequest;
+import com.example.ticketing.reservation.api.dto.ReservationResponse;
 import com.example.ticketing.reservation.application.ReservationLookupService;
 import com.example.ticketing.reservation.application.SeatReservationService;
 import jakarta.validation.Valid;

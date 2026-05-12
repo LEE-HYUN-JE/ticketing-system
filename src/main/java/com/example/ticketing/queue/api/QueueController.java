@@ -1,8 +1,8 @@
 package com.example.ticketing.queue.api;
 
-import com.example.ticketing.queue.api.QueueEntryDtos.QueueEntryRequest;
-import com.example.ticketing.queue.api.QueueEntryDtos.QueueEntryResponse;
-import com.example.ticketing.queue.api.QueueStatusDtos.QueueStatusResponse;
+import com.example.ticketing.queue.api.dto.QueueEntryRequest;
+import com.example.ticketing.queue.api.dto.QueueEntryResponse;
+import com.example.ticketing.queue.api.dto.QueueStatusResponse;
 import com.example.ticketing.queue.application.QueueEntryService;
 import com.example.ticketing.queue.application.QueueStatusService;
 import jakarta.validation.Valid;

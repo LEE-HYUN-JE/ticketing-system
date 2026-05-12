@@ -56,6 +56,8 @@ public class RedisQueueRepository {
     }
 
     public String registerQueueEntry(String token, String eventId, String userId, Instant createdAt, Duration ttl, double score) {
+        // 대기열 진입은 token hash, event/user 역색인, waiting ZSET, event registry가 함께 갱신되어야 한다.
+        // Lua로 묶어 동일 event/user 동시 진입을 하나의 queue token으로 수렴시킨다.
         String result = redisTemplate.execute(
                 registerQueueEntryScript,
                 List.of(

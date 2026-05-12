@@ -32,6 +32,8 @@ public class ReservationEventPublisher {
             body.put("status", event.status());
             body.put("reservedAt", event.reservedAt().toString());
             body.put("idempotencyKey", event.idempotencyKey());
+            // Redis Stream은 성공한 좌석 선점 결과를 MySQL worker에게 넘기는 비동기 경계다.
+            // 이 경계 덕분에 사용자는 DB insert 완료를 기다리지 않는다.
             redisTemplate.opsForStream().add(properties.streamKey(), body);
         } catch (Exception e) {
             log.warn("Failed to publish reservation event for reservationId={}: {}",

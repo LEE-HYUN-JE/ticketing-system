@@ -29,6 +29,8 @@ public class RedisAdmissionRepository {
             return List.of();
         }
 
+        // waiting ZSET에서 오래 기다린 사용자부터 꺼내 active TTL key를 발급한다.
+        // pop과 active 기록을 Lua 한 번으로 처리해야 중복 입장과 유실 사이의 빈틈이 생기지 않는다.
         List<String> result = redisTemplate.execute(
                 admitScript,
                 List.of(keys.waiting(eventId), keys.activePrefix(eventId), keys.activeUsers(eventId)),

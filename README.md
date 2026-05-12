@@ -51,6 +51,14 @@
 
 코드를 직접 열기 전에 전체 구조를 빠르게 파악할 수 있도록 컴포넌트별 문서를 분리했습니다. 각 문서는 폴더 구조, 주요 흐름, 클래스별 책임을 설명합니다.
 
+처음 읽는다면 다음 순서를 권장합니다.
+
+1. [프로젝트 총정리 블로그 초안](블로그.md)으로 문제 정의와 전체 흐름을 먼저 봅니다.
+2. [전체 아키텍처](docs/architecture.md)에서 대기열, active admission, 좌석 선점, 비동기 저장의 경계를 확인합니다.
+3. [Queue 컴포넌트](docs/components/queue.md)와 [Reservation 컴포넌트](docs/components/reservation.md)에서 실제 폴더 구조와 클래스 책임을 따라갑니다.
+4. [Runtime Resources](docs/components/runtime-resources.md)에서 Redis key, Lua script, MySQL schema가 코드와 어떻게 연결되는지 봅니다.
+5. [부하 테스트 계획](docs/load-test-plan.md)과 결과 문서에서 성능 검증 방식을 확인합니다.
+
 - [프로젝트 총정리 블로그 초안](블로그.md): 프로젝트 개요, 요구사항, 아키텍처, 주요 흐름, 테스트 결과
 - [Queue 컴포넌트](docs/components/queue.md): 대기열 진입, token 발급, 상태 조회, active admission 전환
 - [Reservation 컴포넌트](docs/components/reservation.md): 좌석 선점, idempotency, Redis Stream 기반 비동기 저장
@@ -80,7 +88,7 @@
 - [1초 30,000건 Queue Entry 부하 테스트 한계 결과](docs/load-test-results/005-fast-queue-entry-30000-1s.md)
 - [30,000명 Queue-Only 부하 테스트 블로그 초안](docs/blog/queue-admission-30000.md)
 
-## 예정 기술 스택
+## 기술 스택
 
 - Java 21
 - Spring Boot 3
@@ -88,7 +96,7 @@
 - MySQL
 - Docker Compose
 - Testcontainers
-- k6 또는 Gatling
+- k6
 
 ## 개발 방식
 

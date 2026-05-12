@@ -48,6 +48,8 @@ public class RedisReservationRepository {
             Instant reservedAt,
             int idempotencyTtlSeconds
     ) {
+        // 좌석 선점은 active admission, idempotency replay, 사용자 중복 예매, 좌석 중복 점유를 동시에 판단한다.
+        // 여러 Redis 명령으로 나누면 동시 요청 사이에 상태가 바뀔 수 있어 Lua script로 원자 처리한다.
         List<String> result = redisTemplate.execute(
                 claimSeatScript,
                 List.of(
