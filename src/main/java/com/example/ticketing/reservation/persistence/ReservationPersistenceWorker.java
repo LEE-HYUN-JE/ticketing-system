@@ -45,6 +45,9 @@ public class ReservationPersistenceWorker {
 
     @PostConstruct
     public void initConsumerGroup() {
+        if (!properties.workerEnabled()) {
+            return;
+        }
         try {
             redisTemplate.execute((RedisCallback<Void>) connection -> {
                 connection.xGroupCreate(

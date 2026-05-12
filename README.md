@@ -57,6 +57,7 @@
 - [Common 컴포넌트](docs/components/common.md): Redis 설정, scheduling 설정, 전역 에러 응답
 - [Runtime Resources](docs/components/runtime-resources.md): `application.yml`, Redis Lua script, MySQL schema
 - [전체 아키텍처](docs/architecture.md): 시스템 흐름과 설계 배경
+- [Local Multi-WAS 실행 구조](docs/local-multi-was.md): Queue API 3대, Reservation API 1~2대, Load Balancer 기반 로컬 실행 방법
 - [부하 테스트 계획](docs/load-test-plan.md): 성능 검증 방식과 결과 문서 링크
 
 ## 검증 전략

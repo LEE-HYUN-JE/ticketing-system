@@ -14,7 +14,9 @@ import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.connection.stream.StreamReadOptions;
+import org.springframework.test.context.TestPropertySource;
 
+@TestPropertySource(properties = "reservation.persistence.worker-enabled=true")
 class ReservationPersistenceWorkerTest extends RedisIntegrationTestSupport {
 
     @Autowired
