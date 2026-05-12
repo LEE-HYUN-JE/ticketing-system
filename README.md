@@ -51,6 +51,7 @@
 
 코드를 직접 열기 전에 전체 구조를 빠르게 파악할 수 있도록 컴포넌트별 문서를 분리했습니다. 각 문서는 폴더 구조, 주요 흐름, 클래스별 책임을 설명합니다.
 
+- [프로젝트 총정리 블로그 초안](블로그.md): 프로젝트 개요, 요구사항, 아키텍처, 주요 흐름, 테스트 결과
 - [Queue 컴포넌트](docs/components/queue.md): 대기열 진입, token 발급, 상태 조회, active admission 전환
 - [Reservation 컴포넌트](docs/components/reservation.md): 좌석 선점, idempotency, Redis Stream 기반 비동기 저장
 - [Common 컴포넌트](docs/components/common.md): Redis 설정, scheduling 설정, 전역 에러 응답
