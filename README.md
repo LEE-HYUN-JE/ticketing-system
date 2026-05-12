@@ -47,6 +47,19 @@
 
 자세한 설계는 [docs/architecture.md](docs/architecture.md)를 참고합니다.
 
+## 컴포넌트 문서
+
+코드를 직접 열기 전에 전체 구조를 빠르게 파악할 수 있도록 컴포넌트별 문서를 분리했습니다. 각 문서는 폴더 구조, 주요 흐름, 클래스별 책임을 설명합니다.
+
+- [프로젝트 총정리 블로그 초안](블로그.md): 프로젝트 개요, 요구사항, 아키텍처, 주요 흐름, 테스트 결과
+- [Queue 컴포넌트](docs/components/queue.md): 대기열 진입, token 발급, 상태 조회, active admission 전환
+- [Reservation 컴포넌트](docs/components/reservation.md): 좌석 선점, idempotency, Redis Stream 기반 비동기 저장
+- [Common 컴포넌트](docs/components/common.md): Redis 설정, scheduling 설정, 전역 에러 응답
+- [Runtime Resources](docs/components/runtime-resources.md): `application.yml`, Redis Lua script, MySQL schema
+- [전체 아키텍처](docs/architecture.md): 시스템 흐름과 설계 배경
+- [Local Multi-WAS 실행 구조](docs/local-multi-was.md): Queue API 3대, Reservation API 1~2대, Load Balancer 기반 로컬 실행 방법
+- [부하 테스트 계획](docs/load-test-plan.md): 성능 검증 방식과 결과 문서 링크
+
 ## 검증 전략
 
 성능과 정합성은 부하 테스트로 검증합니다.
@@ -60,6 +73,12 @@
 - 대기열 상태 조회와 예매 처리는 DB를 직접 압박하지 않는다.
 
 부하 테스트 계획은 [docs/load-test-plan.md](docs/load-test-plan.md)를 참고합니다.
+
+최근 검증 결과:
+
+- [1초 10,000건 Queue Entry 부하 테스트 통과 결과](docs/load-test-results/005-fast-queue-entry-10000-1s.md)
+- [1초 30,000건 Queue Entry 부하 테스트 한계 결과](docs/load-test-results/005-fast-queue-entry-30000-1s.md)
+- [30,000명 Queue-Only 부하 테스트 블로그 초안](docs/blog/queue-admission-30000.md)
 
 ## 예정 기술 스택
 
@@ -81,7 +100,7 @@
 2. `002-seat-reservation`: 좌석 조회, 무작위 좌석 선택, Redis Lua 기반 좌석 선점
 3. `003-idempotency`: Idempotency-Key 기반 중복 요청 차단
 4. `004-async-persistence`: 예매 성공 이벤트 비동기 DB 저장
-5. `005-load-test`: 3,000명, 10,000명, 30,000명 부하 테스트
+5. `005-load-test`: 30,000명 queue-only 부하 테스트
 6. `006-observability-docs`: 테스트 결과와 설계 결정 문서화
 
 ## 예상 저장소 구조

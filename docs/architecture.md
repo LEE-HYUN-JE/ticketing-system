@@ -67,6 +67,35 @@ score: request timestamp
 - 대기열 등록과 상태 조회는 MySQL을 사용하지 않는다.
 - Redis `KEYS` 명령어를 사용하지 않는다.
 
+대기열 key model:
+
+```text
+waiting:{eventId}
+type: ZSET
+member: userId
+score: request timestamp
+purpose: oldest-first waiting queue
+
+queue-token:{token}
+type: HASH
+fields: eventId, userId, createdAt
+ttl: queue.token-ttl-seconds
+purpose: polling token을 event/user로 해석
+
+queue-user-token:{eventId}:{userId}
+type: STRING
+value: token
+ttl: queue.token-ttl-seconds
+purpose: 동일 event/user의 중복 진입에서 기존 token 재사용
+
+queue-events
+type: SET
+member: eventId
+purpose: scheduler가 Redis KEYS 없이 처리 대상 event를 찾는 registry
+```
+
+Queue API의 hot path는 위 key를 직접 지정해서 접근한다. event/user 중복 진입은 `queue-user-token:{eventId}:{userId}` reverse index로 기존 token을 찾고, scheduler는 `queue-events` registry를 읽어 이벤트 목록을 순회한다. 이 방식은 Redis keyspace 전체 탐색 없이 대기열 등록, 상태 조회, admission 처리를 수행하기 위한 경계다.
+
 ### 2. Active Token
 
 Admission Scheduler는 설정된 admission rate에 따라 대기열에서 사용자를 꺼내 active token을 발급합니다.
@@ -84,6 +113,24 @@ TTL이 필요한 이유:
 - 입장 후 브라우저를 닫은 사용자가 영원히 자리를 점유하지 않게 한다.
 - 예매 계층으로 들어오는 요청량을 시간 단위로 제한한다.
 - 포기한 사용자를 자동으로 정리한다.
+
+Admission Scheduler는 매초 실행되며, 각 event의 `waiting:{eventId}`에서 오래 기다린 사용자부터 설정된 `queue.admission-rate-per-second`만큼 꺼낸다. Lua script는 waiting ZSET에서 pop한 사용자에게 `active:{eventId}:{userId}` TTL key를 만들고, 관찰용 `active-users:{eventId}` ZSET에도 만료 시각을 기록한다.
+
+```text
+active:{eventId}:{userId}
+type: STRING
+value: enteredAt
+ttl: queue.active-ttl-seconds
+purpose: Reservation API 진입 권한
+
+active-users:{eventId}
+type: ZSET
+member: userId
+score: active expiration epoch millis
+purpose: 현재 active 사용자 수 관찰과 만료된 관찰 항목 정리
+```
+
+`ActiveAdmissionGuard`는 후속 reservation 기능의 경계다. Reservation API는 좌석 선점 전에 event/user 조합의 active key TTL을 확인하고, active admission이 없으면 예매를 진행하지 않는다. 즉, 대기열은 reservation을 직접 수행하지 않고 “예매 계층에 들어가도 되는 사용자만 통과시키는 권한”을 제공한다.
 
 ### 3. 좌석 예매
 

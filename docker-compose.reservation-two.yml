@@ -1,0 +1,7 @@
+services:
+  load-balancer:
+    volumes:
+      - ./nginx/ticketing-reservation-two.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      reservation-was-2:
+        condition: service_started

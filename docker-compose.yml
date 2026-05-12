@@ -4,4 +4,91 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ticketing
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+
+  load-balancer:
+    image: nginx:1.27-alpine
+    ports:
+      - "18080:80"
+    volumes:
+      - ./nginx/ticketing.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      queue-was-1:
+        condition: service_started
+      queue-was-2:
+        condition: service_started
+      queue-was-3:
+        condition: service_started
+      reservation-was-1:
+        condition: service_started
+
+  queue-was-1: &app_base
+    build: .
+    environment: &api_environment
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ticketing
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      QUEUE_SCHEDULER_ENABLED: "false"
+      RESERVATION_PERSISTENCE_WORKER_ENABLED: "false"
+    depends_on: &app_dependencies
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+
+  queue-was-2:
+    <<: *app_base
+    environment:
+      <<: *api_environment
+
+  queue-was-3:
+    <<: *app_base
+    environment:
+      <<: *api_environment
+
+  reservation-was-1:
+    <<: *app_base
+    environment:
+      <<: *api_environment
+
+  reservation-was-2:
+    <<: *app_base
+    profiles:
+      - reservation-two
+    environment:
+      <<: *api_environment
+
+  queue-scheduler:
+    <<: *app_base
+    environment:
+      <<: *api_environment
+      QUEUE_SCHEDULER_ENABLED: "true"
+      RESERVATION_PERSISTENCE_WORKER_ENABLED: "false"
+
+  reservation-worker:
+    <<: *app_base
+    environment:
+      <<: *api_environment
+      QUEUE_SCHEDULER_ENABLED: "false"
+      RESERVATION_PERSISTENCE_WORKER_ENABLED: "true"
+      RESERVATION_PERSISTENCE_CONSUMER_NAME: worker-1

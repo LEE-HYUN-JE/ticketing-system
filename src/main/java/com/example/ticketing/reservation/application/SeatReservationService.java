@@ -1,11 +1,14 @@
 package com.example.ticketing.reservation.application;
 
 import com.example.ticketing.reservation.api.ReservationDtos.ReservationResponse;
+import com.example.ticketing.reservation.domain.ReservationModels.ReservationEvent;
 import com.example.ticketing.reservation.domain.ReservationModels.SeatClaimResult;
 import com.example.ticketing.reservation.domain.ReservationStatus;
 import com.example.ticketing.reservation.infrastructure.RedisReservationRepository;
+import com.example.ticketing.reservation.persistence.ReservationEventPublisher;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -16,26 +19,30 @@ public class SeatReservationService {
     private final RedisReservationRepository reservationRepository;
     private final SeatIdValidator seatIdValidator;
     private final ReservationProperties properties;
+    private final ReservationEventPublisher eventPublisher;
     private final Clock clock;
 
     @Autowired
     public SeatReservationService(
             RedisReservationRepository reservationRepository,
             SeatIdValidator seatIdValidator,
-            ReservationProperties properties
+            ReservationProperties properties,
+            ReservationEventPublisher eventPublisher
     ) {
-        this(reservationRepository, seatIdValidator, properties, Clock.systemUTC());
+        this(reservationRepository, seatIdValidator, properties, eventPublisher, Clock.systemUTC());
     }
 
     SeatReservationService(
             RedisReservationRepository reservationRepository,
             SeatIdValidator seatIdValidator,
             ReservationProperties properties,
+            ReservationEventPublisher eventPublisher,
             Clock clock
     ) {
         this.reservationRepository = reservationRepository;
         this.seatIdValidator = seatIdValidator;
         this.properties = properties;
+        this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
 
@@ -52,14 +59,23 @@ public class SeatReservationService {
             return new ReservationResponse(ReservationStatus.INVALID_SEAT, null, "Invalid seat id");
         }
 
+        Instant now = Instant.now(clock);
         SeatClaimResult result = reservationRepository.claimSeat(
                 eventId,
                 userId,
                 seatId,
                 idempotencyKey,
-                Instant.now(clock),
+                now,
                 properties.idempotencyTtlSeconds()
         );
+        if (result.status() == ReservationStatus.RESERVED) {
+            eventPublisher.publish(new ReservationEvent(
+                    UUID.randomUUID().toString(),
+                    eventId, userId, seatId,
+                    result.status().name(),
+                    now, idempotencyKey
+            ));
+        }
         return new ReservationResponse(result.status(), result.seatId(), result.message());
     }
 

@@ -4,11 +4,15 @@ import com.example.ticketing.queue.domain.QueueModels.QueuePosition;
 import com.example.ticketing.queue.domain.QueueModels.QueueTokenMapping;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -20,10 +24,14 @@ public class RedisQueueRepository {
 
     private final StringRedisTemplate redisTemplate;
     private final QueueRedisKeys keys;
+    private final DefaultRedisScript<String> registerQueueEntryScript;
 
     public RedisQueueRepository(StringRedisTemplate redisTemplate, QueueRedisKeys keys) {
         this.redisTemplate = redisTemplate;
         this.keys = keys;
+        this.registerQueueEntryScript = new DefaultRedisScript<>();
+        this.registerQueueEntryScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("lua/register_queue_entry.lua")));
+        this.registerQueueEntryScript.setResultType(String.class);
     }
 
     public Optional<String> findExistingToken(String eventId, String userId) {
@@ -45,6 +53,28 @@ public class RedisQueueRepository {
         ));
         redisTemplate.expire(keys.queueToken(token), ttl);
         redisTemplate.opsForValue().set(keys.queueUserToken(eventId, userId), token, ttl);
+    }
+
+    public String registerQueueEntry(String token, String eventId, String userId, Instant createdAt, Duration ttl, double score) {
+        String result = redisTemplate.execute(
+                registerQueueEntryScript,
+                List.of(
+                        keys.queueUserToken(eventId, userId),
+                        keys.queueToken(token),
+                        keys.waiting(eventId),
+                        keys.queueEvents()
+                ),
+                eventId,
+                userId,
+                token,
+                createdAt.toString(),
+                Long.toString(ttl.toSeconds()),
+                Double.toString(score)
+        );
+        if (result == null || result.isBlank()) {
+            throw new IllegalStateException("Queue entry registration failed");
+        }
+        return result;
     }
 
     public Optional<QueueTokenMapping> findTokenMapping(String token) {
