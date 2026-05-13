@@ -9,6 +9,7 @@ const rate = Number(__ENV.RATE || '10000');
 const duration = __ENV.DURATION || '1s';
 const preAllocatedVUs = Number(__ENV.PRE_ALLOCATED_VUS || '10000');
 const maxVUs = Number(__ENV.MAX_VUS || '12000');
+const userPrefix = __ENV.USER_PREFIX || 'user';
 
 const queueEntries = new Counter('queue_entries');
 const invalidResponses = new Counter('queue_entry_invalid');
@@ -31,7 +32,7 @@ export const options = {
 };
 
 export default function () {
-  const userId = `user-${exec.scenario.iterationInTest}`;
+  const userId = `${userPrefix}-${exec.scenario.iterationInTest}`;
   const response = http.post(
     `${baseUrl}/api/events/${eventId}/queue`,
     JSON.stringify({ userId }),

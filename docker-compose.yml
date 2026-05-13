@@ -29,7 +29,12 @@ services:
     ports:
       - "18080:80"
     volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ticketing.conf:/etc/nginx/conf.d/default.conf:ro
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
     depends_on:
       queue-was-1:
         condition: service_started
@@ -42,6 +47,10 @@ services:
 
   queue-was-1: &app_base
     build: .
+    ulimits: &app_ulimits
+      nofile:
+        soft: 1048576
+        hard: 1048576
     environment: &api_environment
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ticketing
       SPRING_DATASOURCE_USERNAME: root

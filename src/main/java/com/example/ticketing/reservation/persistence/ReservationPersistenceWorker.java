@@ -204,13 +204,16 @@ public class ReservationPersistenceWorker {
             jpaRepository.save(entity);
             log.debug("Saved reservation={} event={} user={} seat={}",
                     entity.getId(), entity.getEventId(), entity.getUserId(), entity.getSeatId());
+            ack(messageId);
         } catch (DataIntegrityViolationException e) {
             // Redis Stream은 at-least-once에 가깝게 동작한다. 재전달 중복은 MySQL unique constraint가 최종 방어선이다.
             log.warn("Duplicate reservation skipped: messageId={}", messageId);
+            ack(messageId);
         } catch (Exception e) {
-            log.error("Failed to process message id={}: {}", messageId, e.getMessage());
+            // DB 타임아웃·연결 실패 같은 일시적 오류는 ACK 하지 않는다.
+            // 메시지가 펜딩 목록에 남아 reclaimAndProcess 가 pendingIdleMs 이후 재처리한다.
+            log.error("Failed to process message id={}, pending reclaim will retry: {}", messageId, e.getMessage());
         }
-        ack(messageId);
     }
 
     private String stringBody(Object value) {

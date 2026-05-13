@@ -1,0 +1,32 @@
+# Reservation Flow Verification
+
+eventId: reservation-flow-10000-resource2-20260513124043
+totalRequests: 9890
+seatCapacity: 2000
+
+예매 실패된 총 인원: 7890 명
+예매 성공한 총 인원: 2000 명
+좌석 중복 입석: 0 개
+사용자 중복 예매: 0 개
+좌석 수 초과 예약: 0 건
+
+K6 완료 iteration 수: 9890
+K6 dropped iteration 수: 0
+K6 대기열 진입 성공 수: 9890
+K6 대기열 진입 실패 수: 0
+K6 예매 시도 수: 102631
+K6 예매 성공 응답 수: 2000
+K6 예매 마감/타임아웃 수: 7890
+K6 NOT_ACTIVE 수: 0
+K6 좌석 선점 충돌 수: 100622
+
+Redis 예약 좌석 수: 2000
+Redis 예약 사용자 수: 2000
+MySQL RESERVED row 수: 2000
+
+정상 기준:
+- 예매 성공한 총 인원은 seatCapacity(2000) 이하여야 한다.
+- 좌석 중복 입석은 0개여야 한다.
+- 사용자 중복 예매는 0개여야 한다.
+- 좌석 수 초과 예약은 0건이어야 한다.
+- worker 반영 완료 후 Redis 예약 수와 MySQL RESERVED row 수가 같아야 한다.

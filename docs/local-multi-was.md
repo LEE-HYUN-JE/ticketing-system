@@ -37,7 +37,7 @@ flowchart LR
     Q3 --> Redis
     R1 --> Redis
     R2 --> Redis
-    Scheduler -->|"ZPOPMIN + active token 발급"| Redis
+    Scheduler -->|"admit_waiting_users.lua<br/>waiting -> active 전환"| Redis
     Worker -->|"XREADGROUP"| Redis
     Worker -->|"예약 성공 이벤트 저장"| MySQL
 ```
@@ -84,7 +84,7 @@ Nginx는 API path 기준으로 upstream을 나눈다.
 - `/api/events/{eventId}/reservations` → `reservation-was-1`
 - 2대 옵션에서는 reservation 요청이 `reservation-was-1`, `reservation-was-2`로 분산된다.
 
-부하 테스트도 애플리케이션 포트가 아니라 `http://localhost:18080`을 대상으로 실행해야 한다.
+부하 테스트도 애플리케이션 포트가 아니라 Load Balancer 진입점인 `http://localhost:18080`을 대상으로 실행해야 한다.
 
 ```bash
 BASE_URL=http://localhost:18080 k6 run load-tests/queue-entry-10000-1s.js

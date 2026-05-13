@@ -1,4 +1,4 @@
-# Architecture
+# 전체 아키텍처
 
 이 문서는 명절 기차표 예매 상황을 가정한 대용량 트래픽 제어 시스템의 전체 아키텍처를 설명합니다.
 
@@ -8,46 +8,53 @@
 
 ```mermaid
 flowchart TD
-    User((User))
+    User((사용자))
+    K6["k6<br/>부하 테스트"]
+    LB["Nginx Load Balancer<br/>Queue/Reservation 라우팅"]
 
-    subgraph TrafficShaping["Traffic Shaping Layer"]
-        QueueApi["Queue API"]
-        Scheduler["Admission Scheduler"]
-        RedisQueue[("Redis\nwaiting ZSET\nactive token")]
+    subgraph TrafficShaping["대기열 및 인가 계층<br/>Traffic Shaping"]
+        QueueApi["Queue WAS x3<br/>대기열 진입/상태 조회"]
+        Scheduler["Admission Scheduler<br/>초당 N명 active 전환"]
     end
 
-    subgraph ReservationLayer["Reservation Layer"]
-        ReservationApi["Reservation API"]
-        ActiveGuard["ActiveAdmissionGuard"]
-        SeatLua[("Redis Lua Script\nactive / idempotency / seat claim")]
+    subgraph ReservationLayer["예매 트랜잭션 계층<br/>Idempotency & Concurrency"]
+        ReservationApi["Reservation WAS<br/>좌석 선점 API"]
+        ActiveGuard["ActiveAdmissionGuard<br/>active token 확인"]
+        SeatLua["claim_seat.lua<br/>좌석 선점 원자 처리"]
     end
 
-    subgraph PersistenceLayer["Persistence Layer"]
-        EventQueue[("Redis Stream\nreservation-events")]
-        Worker["ReservationPersistenceWorker"]
-        MySQL[("MySQL\nreservations")]
+    subgraph PersistenceLayer["비동기 영속화 계층"]
+        Worker["ReservationPersistenceWorker<br/>Redis Stream 소비"]
+        MySQL[("MySQL<br/>reservations")]
     end
 
-    User -->|"1. POST /queue<br/>대기열 진입 요청"| QueueApi
-    QueueApi -->|"2. register_queue_entry.lua<br/>token / waiting ZSET 원자 등록"| RedisQueue
-    QueueApi -->|"3. 응답: queueToken, WAITING, pollAfterSeconds"| User
-    User -.->|"4. GET /queue/{queueToken}<br/>polling"| QueueApi
-    QueueApi -.->|"5. ZRANK waiting 또는 active TTL 조회"| RedisQueue
-    QueueApi -.->|"6-A. 응답: WAITING, rank, totalWaiting"| User
-    QueueApi -.->|"6-B. 응답: ENTERED, activeExpiresInSeconds"| User
-    Scheduler -->|"7. admit_waiting_users.lua<br/>초당 N명 입장 처리"| RedisQueue
-    Scheduler -->|"8. active:{eventId}:{userId}<br/>TTL key 발급"| RedisQueue
-    User -->|"9. POST /reservations<br/>Idempotency-Key 포함"| ReservationApi
-    ReservationApi -->|"10. active TTL 확인"| ActiveGuard
-    ActiveGuard -->|"11. GET active key"| RedisQueue
-    ReservationApi -->|"12. claim_seat.lua<br/>active / idempotency / seat 원자 처리"| SeatLua
-    SeatLua -->|"13-A. 응답: RESERVED, seatId"| ReservationApi
-    SeatLua -->|"13-B. 응답: NOT_ACTIVE / ALREADY_RESERVED / SEAT_ALREADY_TAKEN"| ReservationApi
-    ReservationApi -->|"14. 성공 이벤트 XADD"| EventQueue
-    ReservationApi -->|"15. API 응답 반환<br/>DB 저장 완료는 기다리지 않음"| User
-    EventQueue -->|"16. XREADGROUP"| Worker
-    Worker -->|"17. INSERT reservations<br/>unique constraint로 중복 방어"| MySQL
-    Worker -->|"18. XACK"| EventQueue
+    Redis[("Redis<br/>waiting ZSET<br/>queue token Hash<br/>active TTL token<br/>seat claim<br/>idempotency cache<br/>reservation-events Stream")]
+
+    User -->|"1. POST /queue<br/>대기열 진입 요청"| LB
+    K6 -->|"부하 테스트 트래픽"| LB
+    LB -->|"2. Queue API 요청 분산"| QueueApi
+    QueueApi -->|"3. register_queue_entry.lua<br/>token / waiting ZSET 원자 등록"| Redis
+    QueueApi -->|"4. 응답: queueToken, WAITING, pollAfterSeconds"| User
+    User -.->|"5. GET /queue/{queueToken}<br/>polling"| LB
+    LB -.->|"6. Queue API 요청 분산"| QueueApi
+    QueueApi -.->|"7. ZRANK waiting 또는 active TTL 조회"| Redis
+    QueueApi -.->|"8-A. 응답: WAITING, rank, totalWaiting"| User
+    QueueApi -.->|"8-B. 응답: ENTERED, activeExpiresInSeconds"| User
+    Scheduler -->|"9. admit_waiting_users.lua<br/>초당 N명 입장 처리"| Redis
+    Scheduler -->|"10. active:{eventId}:{userId}<br/>TTL key 발급"| Redis
+    User -->|"11. POST /reservations<br/>Idempotency-Key 포함"| LB
+    LB -->|"12. Reservation API 라우팅"| ReservationApi
+    ReservationApi -->|"13. active TTL 확인"| ActiveGuard
+    ActiveGuard -->|"14. GET active key"| Redis
+    ReservationApi -->|"15. claim_seat.lua<br/>active / idempotency / seat 원자 처리"| SeatLua
+    SeatLua -->|"16. seat/reservation/idempotency 처리"| Redis
+    SeatLua -->|"17-A. 응답: RESERVED, seatId"| ReservationApi
+    SeatLua -->|"17-B. 응답: NOT_ACTIVE / ALREADY_RESERVED / SEAT_ALREADY_TAKEN"| ReservationApi
+    ReservationApi -->|"18. 성공 이벤트 XADD"| Redis
+    ReservationApi -->|"19. API 응답 반환<br/>DB 저장 완료는 기다리지 않음"| User
+    Redis -->|"20. XREADGROUP<br/>reservation-events"| Worker
+    Worker -->|"21. INSERT reservations<br/>unique constraint로 중복 방어"| MySQL
+    Worker -->|"22. XACK"| Redis
 ```
 
 ## 핵심 설계
