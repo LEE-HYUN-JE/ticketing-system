@@ -24,6 +24,13 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * Redis Stream의 예약 성공 이벤트를 MySQL에 비동기로 저장하는 worker다.
+ *
+ * <p>이 worker는 API WAS와 분리된 컨테이너에서 실행되며, 좌석 선점 hot path와 MySQL insert를 분리한다.
+ * Stream은 at-least-once 성격으로 동작하므로, 중복 저장은 MySQL unique constraint가 흡수하고,
+ * 일시적 DB 오류는 XACK를 생략해 pending 재처리로 복구한다.</p>
+ */
 @Component
 public class ReservationPersistenceWorker {
 
@@ -43,6 +50,10 @@ public class ReservationPersistenceWorker {
         this.properties = properties;
     }
 
+    /**
+     * worker가 활성화된 인스턴스에서만 Redis Stream consumer group을 준비한다.
+     * API WAS에서는 worker가 비활성화되어 있으므로 초기화 비용과 부작용이 없다.
+     */
     @PostConstruct
     public void initConsumerGroup() {
         if (!properties.workerEnabled()) {
@@ -86,6 +97,8 @@ public class ReservationPersistenceWorker {
 
     /**
      * 이 consumer group의 pending 메시지 중 idle 시간이 지난 메시지를 다시 소유해 처리한다.
+     *
+     * @param idleMs 메시지가 pending 상태로 머문 시간이 이 값 이상이면 재처리 대상으로 본다
      */
     public void reclaimAndProcess(long idleMs) {
         try {

@@ -14,6 +14,12 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 좌석 선점과 예약 조회를 담당하는 Redis repository다.
+ *
+ * <p>좌석 예매는 여러 조건(active admission, idempotency, 사용자 중복 예약, 좌석 중복 점유)을 동시에 만족해야 한다.
+ * 이 repository는 {@code claim_seat.lua}를 호출해 그 판단과 상태 갱신을 Redis 서버 내부에서 원자적으로 끝낸다.</p>
+ */
 @Repository
 public class RedisReservationRepository {
 
@@ -42,6 +48,14 @@ public class RedisReservationRepository {
     /**
      * Redis Lua script로 좌석 선점의 모든 비즈니스 조건을 원자적으로 평가한다.
      * Java 레벨에서 여러 Redis 명령으로 쪼개지 않기 때문에 동시 요청에서도 좌석/사용자/idempotency 상태가 함께 갱신된다.
+     *
+     * @param eventId 티켓팅 이벤트 식별자
+     * @param userId 사용자 식별자
+     * @param seatId 선점하려는 좌석 식별자
+     * @param idempotencyKey 클라이언트 재시도 중복을 식별하는 키
+     * @param reservedAt 좌석 선점 시각
+     * @param idempotencyTtlSeconds 결과 replay cache 유지 시간
+     * @return Redis Lua script가 계산한 좌석 선점 결과
      */
     @SuppressWarnings("unchecked")
     public SeatClaimResult claimSeat(
@@ -79,6 +93,10 @@ public class RedisReservationRepository {
     /**
      * Redis에 저장된 사용자별 예매 hash를 조회한다.
      * Redis가 실시간 조회 저장소이고 MySQL은 비동기 최종 저장소이므로 조회 API는 이 값을 우선 사용한다.
+     *
+     * @param eventId 티켓팅 이벤트 식별자
+     * @param userId 사용자 식별자
+     * @return Redis에 예약 hash가 있으면 사용자별 예약 결과
      */
     public Optional<ReservationLookupResult> findUserReservation(String eventId, String userId) {
         Map<Object, Object> values = redisTemplate.opsForHash().entries(reservationKeys.reservationUser(eventId, userId));

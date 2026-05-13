@@ -10,6 +10,12 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+/**
+ * queue token 기반으로 사용자의 현재 대기열 상태를 계산한다.
+ *
+ * <p>서버 인스턴스는 사용자별 세션을 보관하지 않는다. token을 Redis에서 event/user로 복원한 뒤,
+ * waiting ZSET과 active TTL key를 순서대로 확인해 {@code WAITING}, {@code ENTERED}, {@code EXPIRED}를 판단한다.</p>
+ */
 @Service
 public class QueueStatusService {
 
@@ -24,6 +30,11 @@ public class QueueStatusService {
     /**
      * queue token을 event/user로 해석한 뒤 현재 대기 상태를 계산한다.
      * waiting ZSET에 있으면 순번을, waiting에서 빠졌고 active TTL이 남아 있으면 ENTERED를, 둘 다 아니면 EXPIRED를 반환한다.
+     *
+     * @param eventId 조회 대상 이벤트 식별자
+     * @param queueToken 대기열 진입 시 발급받은 polling token
+     * @return 사용자의 현재 대기열 상태 응답
+     * @throws IllegalArgumentException token 형식이 잘못됐거나 다른 이벤트에 속한 token인 경우
      */
     public QueueStatusResponse getStatus(String eventId, String queueToken) {
         validateRequired("eventId", eventId);
