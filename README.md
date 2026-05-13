@@ -107,6 +107,20 @@ flowchart LR
     Worker -->|"XACK<br/>저장 완료 ACK"| Redis
 ```
 
+### 저장소 역할 요약
+
+Redis는 실시간 트래픽을 받아내는 상태 저장소입니다.
+
+- `waiting ZSET`: 대기열입니다. 사용자별 진입 순서를 score로 저장하고, `ZRANK`로 대기순번을 조회합니다.
+- `active TTL token`: 예매 가능 입장권입니다. 스케줄러가 대기열 앞쪽 사용자를 active로 전환하고, TTL이 지나면 자동 만료됩니다.
+- `seat claim`: 좌석 선점 상태입니다. `seat:{eventId}:{seatId}` 키로 어떤 사용자가 좌석을 선점했는지 저장합니다.
+- `idempotency cache`: 같은 `Idempotency-Key`로 재시도한 예매 요청에 최초 결과를 그대로 돌려주기 위한 캐시입니다.
+- `reservation-events Stream`: 좌석 선점 성공 이벤트를 MySQL 저장 worker에게 넘기는 Redis Stream입니다.
+
+MySQL은 최종 예약 결과를 보관하는 영속 저장소입니다.
+
+- `최종 예약 저장소`: Redis에서 선점에 성공한 예약만 `reservations` 테이블에 저장합니다.
+- `unique constraint`: 같은 이벤트에서 동일 사용자 또는 동일 좌석이 중복 저장되지 않도록 최종 방어선 역할을 합니다.
 
 ---
 
